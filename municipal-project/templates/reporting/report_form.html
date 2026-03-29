@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report an Issue - KimConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header with clear feedback -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <span class="text-purple-600">📍</span> Report a Community Issue
+        </h1>
+        <p class="text-gray-500">Help improve Kimberley - complete this form in under 2 minutes</p>
+    </div>
+
+    {% if form.errors %}
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6" role="alert">
+        <div class="flex items-start gap-3">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 mt-0.5"></i>
+            <div>
+                <h3 class="font-medium text-red-800">Please fix the following errors:</h3>
+                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-6" id="report-form" novalidate>
+        {% csrf_token %}
+
+        <!-- Step Indicator - Progressive Disclosure -->
+        <div class="bg-purple-50 rounded-xl p-4 mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-purple-700">Progress</span>
+                <span class="text-sm text-purple-600" id="step-indicator">Step 1 of 4</span>
+            </div>
+            <div class="h-2 bg-purple-200 rounded-full overflow-hidden">
+                <div class="h-full bg-purple-600 rounded-full transition-all duration-500" id="progress-bar" style="width: 25%"></div>
+            </div>
+        </div>
+
+        <!-- Step 1: Issue Type (Picture-based for visibility) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" id="step-1">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">1</span>
+                What type of issue?
+            </h2>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                <label class="cursor-pointer">
+                    <input type="radio" name="issue_type" value="water" class="sr-only peer" required>
+                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center hover:border-purple-300 peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                        <span class="text-3xl mb-2 block">💧</span>
+                        <span class="text-sm font-medium">Water</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="issue_type" value="electricity" class="sr-only peer">
+                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center hover:border-purple-300 peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                        <span class="text-3xl mb-2 block">⚡</span>
+                        <span class="text-sm font-medium">Electricity</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="issue_type" value="pothole" class="sr-only peer">
+                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center hover:border-purple-300 peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                        <span class="text-3xl mb-2 block">🕳️</span>
+                        <span class="text-sm font-medium">Pothole</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="issue_type" value="waste" class="sr-only peer">
+                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center hover:border-purple-300 peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                        <span class="text-3xl mb-2 block">🗑️</span>
+                        <span class="text-sm font-medium">Waste</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="issue_type" value="streetlight" class="sr-only peer">
+                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center hover:border-purple-300 peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                        <span class="text-3xl mb-2 block">💡</span>
+                        <span class="text-sm font-medium">Street Light</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="issue_type" value="other" class="sr-only peer">
+                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center hover:border-purple-300 peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                        <span class="text-3xl mb-2 block">📍</span>
+                        <span class="text-sm font-medium">Other</span>
+                    </div>
+                </label>
+            </div>
+            
+            <!-- Hidden actual form field -->
+            <div class="hidden">{{ form.issue_type }}</div>
+            {% if form.issue_type.errors %}
+            <p class="text-red-500 text-sm mt-2">{{ form.issue_type.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Step 2: Location with GPS -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" id="step-2">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">2</span>
+                Where is the issue?
+            </h2>
+            
+            <div class="mb-4">
+                <label for="id_location" class="block text-sm font-medium text-gray-700 mb-2">
+                    Address or Landmark <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <input type="text" name="location" id="id_location" 
+                           class="w-full p-4 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-lg"
+                           placeholder="e.g., Bultfontein Road, Galeshewe"
+                           required minlength="5"
+                           autocomplete="off">
+                    <button type="button" onclick="getLocation()" id="location-btn" 
+                            class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            aria-label="Use current GPS location" title="Tap to use your current location">
+                        <i data-lucide="crosshair" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Enter street name or landmark, or tap the GPS button</p>
+                {% if form.location.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.location.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- GPS Status -->
+            <div id="location-status" class="hidden p-3 rounded-lg mb-4" role="status">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                    <span class="text-sm text-green-700" id="location-text"></span>
+                </div>
+            </div>
+
+            <!-- Hidden GPS Fields -->
+            <input type="hidden" name="latitude" id="id_latitude">
+            <input type="hidden" name="longitude" id="id_longitude">
+            <input type="hidden" name="location_accuracy" id="id_location_accuracy">
+        </div>
+
+        <!-- Step 3: Details -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" id="step-3">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">3</span>
+                Describe the issue
+            </h2>
+            
+            <div class="mb-4">
+                <label for="id_title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Issue Title <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="title" id="id_title" 
+                       class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                       placeholder="e.g., Water leak on Bultfontein Road"
+                       required minlength="10" maxlength="200">
+                <p class="mt-2 text-xs text-gray-500">Be specific - include street name and nature of issue</p>
+                {% if form.title.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <label for="id_description" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                <textarea name="description" id="id_description" rows="4"
+                          class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                          placeholder="Describe the issue... When did it start? How does it affect you?"
+                          required minlength="20"></textarea>
+                <p class="mt-2 text-xs text-gray-500">Include when it started, how it affects you, and any safety concerns</p>
+                {% if form.description.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Priority with clear explanations - VISIBILITY principle -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Priority Level <span class="text-red-500">*</span>
+                </label>
+                <div class="space-y-2">
+                    <label class="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-yellow-300 has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50 transition-all">
+                        <input type="radio" name="priority" value="low" class="mt-1 w-5 h-5 text-green-600" checked>
+                        <div>
+                            <span class="font-medium text-gray-900">🟢 Low Priority</span>
+                            <p class="text-sm text-gray-500">Minor inconvenience, can wait for scheduled maintenance</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-yellow-300 has-[:checked]:border-yellow-500 has-[:checked]:bg-yellow-50 transition-all">
+                        <input type="radio" name="priority" value="medium" class="mt-1 w-5 h-5 text-yellow-600">
+                        <div>
+                            <span class="font-medium text-gray-900">🟡 Medium Priority</span>
+                            <p class="text-sm text-gray-500">Affecting daily activities, needs attention soon</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-orange-300 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50 transition-all">
+                        <input type="radio" name="priority" value="high" class="mt-1 w-5 h-5 text-orange-600">
+                        <div>
+                            <span class="font-medium text-gray-900">🟠 High Priority</span>
+                            <p class="text-sm text-gray-500">Significant impact, needs urgent attention within 24 hours</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-red-300 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 transition-all">
+                        <input type="radio" name="priority" value="urgent" class="mt-1 w-5 h-5 text-red-600">
+                        <div>
+                            <span class="font-medium text-gray-900">🔴 URGENT - Safety Hazard</span>
+                            <p class="text-sm text-gray-500">Immediate danger to public safety - call emergency services if needed</p>
+                        </div>
+                    </label>
+                </div>
+                <input type="hidden" name="priority" id="id_priority" value="low">
+            </div>
+
+            <!-- Photo Upload with Preview - AFFORDANCE principle -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    📷 Photo (Optional but helpful)
+                </label>
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors" id="photo-upload-area">
+                    <input type="file" name="image" id="id_image" accept="image/*" class="hidden" onchange="previewImage(this)">
+                    <label for="id_image" class="cursor-pointer">
+                        <i data-lucide="camera" class="w-12 h-12 text-gray-400 mx-auto mb-2"></i>
+                        <p class="text-gray-600 font-medium">Tap to upload a photo</p>
+                        <p class="text-xs text-gray-400 mt-1">JPG, PNG up to 5MB</p>
+                    </label>
+                </div>
+                <!-- Image Preview -->
+                <div id="image-preview" class="hidden mt-4">
+                    <img id="preview-img" class="max-h-48 rounded-xl mx-auto">
+                    <button type="button" onclick="removeImage()" class="mt-2 text-sm text-red-600 hover:text-red-700">
+                        Remove photo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Your Information -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" id="step-4">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">4</span>
+                Your Information
+            </h2>
+            
+            <div class="mb-4">
+                <label for="id_reporter_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Your Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="reporter_name" id="id_reporter_name" 
+                       class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                       placeholder="Your full name" required autocomplete="name">
+            </div>
+
+            <div class="mb-4">
+                <label for="id_reporter_email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address <span class="text-red-500">*</span>
+                </label>
+                <input type="email" name="reporter_email" id="id_reporter_email" 
+                       class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                       placeholder="your.email@example.com" required autocomplete="email">
+                <p class="mt-2 text-xs text-gray-500">We'll send updates to this email address</p>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_reporter_phone" class="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number (Optional)
+                </label>
+                <input type="tel" name="reporter_phone" id="id_reporter_phone" 
+                       class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                       placeholder="+27 XX XXX XXXX" autocomplete="tel">
+            </div>
+
+            <!-- Anonymous option -->
+            <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-xl mb-4">
+                <input type="checkbox" name="is_anonymous" id="id_is_anonymous" class="mt-1 w-5 h-5 text-purple-600 rounded">
+                <div>
+                    <label for="id_is_anonymous" class="font-medium text-gray-700">Report Anonymously</label>
+                    <p class="text-sm text-gray-500">Your name will be hidden from public view</p>
+                </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="flex items-start gap-3 mb-6">
+                <input type="checkbox" name="agree_terms" id="id_agree_terms" class="mt-1 w-5 h-5 text-purple-600 rounded" required>
+                <label for="id_agree_terms" class="text-sm text-gray-600">
+                    I agree to the <a href="#" class="text-purple-600 hover:underline">Terms of Service</a> and <a href="#" class="text-purple-600 hover:underline">Privacy Policy</a>
+                </label>
+            </div>
+        </div>
+
+        <!-- Submit Button - Large touch target -->
+        <div class="flex flex-col gap-4">
+            <button type="submit" id="submit-btn"
+                    class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style="min-height: 56px;">
+                <span id="submit-text">Submit Report</span>
+                <i data-lucide="send" class="w-5 h-5" id="submit-icon"></i>
+            </button>
+            <p class="text-center text-sm text-gray-500">
+                Your report will receive a reference number like <strong>SP-ABC123</strong>
+            </p>
+        </div>
+    </form>
+
+    <!-- Info Box -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+        <h3 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+            <i data-lucide="info" class="w-5 h-5"></i>
+            What happens next?
+        </h3>
+        <ol class="text-sm text-blue-800 space-y-2">
+            <li class="flex items-start gap-2">
+                <span class="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-700 mt-0.5">1</span>
+                You'll receive a unique tracking code: <strong>SP-XXXXXX</strong>
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-700 mt-0.5">2</span>
+                Your issue will be assigned to the relevant Sol Plaatje department
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-700 mt-0.5">3</span>
+                You'll receive email updates as your issue is addressed
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-700 mt-0.5">4</span>
+                We'll notify you when it's resolved
+            </li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Initialize icons
+setTimeout(function() { lucide.createIcons(); }, 100);
+
+// GPS Location Detection
+function getLocation() {
+    var btn = document.getElementById('location-btn');
+    var status = document.getElementById('location-status');
+    var statusText = document.getElementById('location-text');
+    
+    if (!navigator.geolocation) {
+        alert('GPS is not supported by your device');
+        return;
+    }
+
+    btn.innerHTML = '<div class="spinner w-6 h-6"></div>';
+    status.classList.remove('hidden');
+    status.classList.add('bg-green-50', 'border', 'border-green-200');
+    statusText.textContent = 'Getting your location...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
+            var accuracy = position.coords.accuracy;
+            
+            document.getElementById('id_latitude').value = lat;
+            document.getElementById('id_longitude').value = lng;
+            document.getElementById('id_location_accuracy').value = accuracy;
+            
+            statusText.textContent = 'Location captured! Accuracy: ' + Math.round(accuracy) + 'm';
+            
+            btn.innerHTML = '<i data-lucide="check" class="w-6 h-6 text-green-600"></i>';
+            lucide.createIcons();
+            
+            // Update progress
+            updateProgress(50);
+        },
+        function(error) {
+            btn.innerHTML = '<i data-lucide="x-circle" class="w-6 h-6 text-red-500"></i>';
+            statusText.textContent = 'Could not get location: ' + error.message;
+            status.classList.remove('bg-green-50');
+            status.classList.add('bg-red-50', 'border-red-200');
+            lucide.createIcons();
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+// Image Preview
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('image-preview').classList.remove('hidden');
+            document.getElementById('photo-upload-area').classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage() {
+    document.getElementById('id_image').value = '';
+    document.getElementById('image-preview').classList.add('hidden');
+    document.getElementById('photo-upload-area').classList.remove('hidden');
+}
+
+// Progress tracking
+function updateProgress(percent) {
+    var bar = document.getElementById('progress-bar');
+    var indicator = document.getElementById('step-indicator');
+    bar.style.width = percent + '%';
+    
+    if (percent < 30) {
+        indicator.textContent = 'Step 1 of 4 - Issue Type';
+    } else if (percent < 55) {
+        indicator.textContent = 'Step 2 of 4 - Location';
+    } else if (percent < 80) {
+        indicator.textContent = 'Step 3 of 4 - Details';
+    } else {
+        indicator.textContent = 'Step 4 of 4 - Your Info';
+    }
+}
+
+// Track form progress
+document.getElementById('id_title').addEventListener('input', function() {
+    if (this.value.length >= 10) updateProgress(80);
+});
+document.getElementById('id_location').addEventListener('input', function() {
+    if (this.value.length >= 5) updateProgress(50);
+});
+document.querySelectorAll('input[name="issue_type"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        updateProgress(30);
+    });
+});
+
+// Form validation feedback
+document.getElementById('report-form').addEventListener('submit', function(e) {
+    var btn = document.getElementById('submit-btn');
+    var btnText = document.getElementById('submit-text');
+    var btnIcon = document.getElementById('submit-icon');
+    
+    // Validate required fields
+    var required = ['issue_type', 'location', 'title', 'description', 'reporter_name', 'reporter_email', 'agree_terms'];
+    var valid = true;
+    
+    for (var i = 0; i < required.length; i++) {
+        var field = document.querySelector('[name="' + required[i] + '"]');
+        if (field && !field.value.trim()) {
+            valid = false;
+            field.classList.add('border-red-500');
+        }
+    }
+    
+    if (!valid) {
+        e.preventDefault();
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btnText.textContent = 'Submitting...';
+    btnIcon.innerHTML = '<div class="spinner w-5 h-5"></div>';
+});
+</script>
+{% endblock %}

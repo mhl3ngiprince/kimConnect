@@ -1,0 +1,214 @@
+<!-- Offline Support Component -->
+<div x-data="{
+    isOnline: navigator.onLine,
+    pendingReports: [],
+    
+    init() {
+        // Check online status
+        window.addEventListener('online', () => { this.isOnline = true; this.syncPending(); });
+        window.addEventListener('offline', () => { this.isOnline = false; });
+        
+        // Load pending reports from IndexedDB
+        this.loadPending();
+        
+        // Listen for lang changes
+        window.addEventListener('lang-change', (e) => {
+            // Update voice recognition language
+            if (window.recognition) {
+                window.recognition.lang = e.detail.lang === 'af' ? 'af-ZA' : 
+                                          e.detail.lang === 'xh' ? 'xh-ZA' : 'en-ZA';
+            }
+        });
+    },
+    
+    async loadPending() {
+        const db = await this.openDB();
+        const tx = db.transaction('pendingReports', 'readonly');
+        const store = tx.objectStore('pendingReports');
+        this.pendingReports = await this.getAllFromStore(store);
+    },
+    
+    openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('KimConnectDB', 1);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('pendingReports')) {
+                    db.createObjectStore('pendingReports', { keyPath: 'id', autoIncrement: true });
+                }
+            };
+        });
+    },
+    
+    getAllFromStore(store) {
+        return new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    },
+    
+    async savePending(data) {
+        const db = await this.openDB();
+        const tx = db.transaction('pendingReports', 'readwrite');
+        const store = tx.objectStore('pendingReports');
+        store.add({ ...data, createdAt: new Date().toISOString() });
+        
+        // Request background sync
+        if ('serviceWorker' in navigator && 'sync' in window.registration) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.sync.register('sync-reports');
+        }
+        
+        this.pendingReports.push(data);
+    },
+    
+    async syncPending() {
+        if (!this.isOnline || this.pendingReports.length === 0) return;
+        
+        for (const report of this.pendingReports) {
+            try {
+                const response = await fetch('/report/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(report.data)
+                });
+                
+                if (response.ok) {
+                    // Remove from pending
+                    const db = await this.openDB();
+                    const tx = db.transaction('pendingReports', 'readwrite');
+                    tx.objectStore('pendingReports').delete(report.id);
+                    this.pendingReports = this.pendingReports.filter(r => r.id !== report.id);
+                    
+                    // Show success notification
+                    this.showToast('Report synced successfully!', 'success');
+                }
+            } catch (error) {
+                console.error('Sync failed:', error);
+            }
+        }
+    },
+    
+    showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-up ${
+            type === 'success' ? 'bg-green-600 text-white' : 
+            type === 'error' ? 'bg-red-600 text-white' : 
+            'bg-primary-600 text-white'
+        }`;
+        toast.innerHTML = `
+            <i data-lucide='${type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info'}' class='w-5 h-5'></i>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(toast);
+        lucide.createIcons();
+        
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+}" x-show="!isOnline || pendingReports.length > 0" x-cloak>
+
+    <!-- Offline Banner -->
+    <div x-show="!isOnline" 
+         class="fixed top-16 left-0 right-0 bg-amber-500 text-white px-4 py-3 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="wifi-off" class="w-5 h-5"></i>
+                <span class="font-medium">You're offline. Reports will be saved locally and synced when connected.</span>
+            </div>
+            <button @click="$refs.offlineBanner.remove()" class="hover:bg-amber-600 rounded p-1">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Pending Reports Counter -->
+    <div x-show="pendingReports.length > 0" 
+         class="fixed bottom-24 left-4 bg-primary-600 text-white px-4 py-3 rounded-xl shadow-xl z-40 cursor-pointer hover:bg-primary-700 transition-colors"
+         @click="$dispatch('show-pending-reports')">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <i data-lucide="cloud-off" class="w-6 h-6"></i>
+                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center" x-text="pendingReports.length"></span>
+            </div>
+            <div>
+                <p class="font-semibold" x-text="pendingReports.length + ' pending report' + (pendingReports.length > 1 ? 's' : '')"></p>
+                <p class="text-xs text-primary-200">Tap to view</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Reports Modal -->
+    <div x-data="{ show: false }" 
+         @show-pending-reports.window="show = true"
+         x-show="show"
+         class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+         x-cloak>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden"
+             @click.away="show = false">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    <i data-lucide="cloud-off" class="w-6 h-6 text-primary-600"></i>
+                    Pending Reports
+                </h3>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-96">
+                <template x-if="pendingReports.length === 0">
+                    <p class="text-gray-500 text-center py-8">No pending reports</p>
+                </template>
+                <template x-for="report in pendingReports" :key="report.id">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl mb-3">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="font-medium text-gray-900 dark:text-white" x-text="report.data?.issue_type || 'Issue'"></p>
+                                <p class="text-sm text-gray-500 mt-1 line-clamp-2" x-text="report.data?.description || 'No description'"></p>
+                                <p class="text-xs text-gray-400 mt-2" x-text="'Saved ' + new Date(report.createdAt).toLocaleString()"></p>
+                            </div>
+                            <span class="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs rounded-full">Pending</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="p-6 border-t border-gray-100 dark:border-gray-700">
+                <button @click="syncPending(); show = false" 
+                        :disabled="!isOnline"
+                        class="w-full py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <span x-show="isOnline">Sync Now</span>
+                    <span x-show="!isOnline">Offline - Will sync when connected</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Network Status Indicator -->
+<div x-data="{
+    wasOffline: false,
+    init() {
+        window.addEventListener('online', () => {
+            if (this.wasOffline) {
+                this.showReconnected();
+            }
+        });
+        window.addEventListener('offline', () => {
+            this.wasOffline = true;
+        });
+    },
+    showReconnected() {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-20 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-up';
+        toast.innerHTML = '<i data-lucide=\"wifi\" class=\"w-5 h-5\"></i><span>Back online! Syncing pending data...</span>';
+        document.body.appendChild(toast);
+        lucide.createIcons();
+        setTimeout(() => toast.remove(), 3000);
+    }
+}"></div>
+
+<style>
+    [x-cloak] { display: none !important; }
+</style>

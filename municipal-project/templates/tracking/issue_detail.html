@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Issue {{ issue.tracking_code }} - KimConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <a href="{% url 'reporting:issue_list' %}" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </a>
+                    <span class="text-sm text-gray-500">Issue Details</span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    {{ issue.title }}
+                    <span class="px-3 py-1 rounded-full text-sm font-medium status-{{ issue.status }}">
+                        {{ issue.get_status_display }}
+                    </span>
+                </h1>
+                <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                    <span class="flex items-center gap-1">
+                        <i data-lucide="hash" class="w-4 h-4"></i>
+                        {{ issue.tracking_code }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i data-lucide="calendar" class="w-4 h-4"></i>
+                        {{ issue.created_at|date:'M d, Y H:i' }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        {{ issue.current_age|floatformat:0 }} hours old
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="flex flex-wrap gap-2">
+                <button onclick="copyTrackingCode()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    Copy Code
+                </button>
+                <a href="#" onclick="window.print(); return false;" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Print
+                </a>
+                {% if not issue.is_anonymous %}
+                <a href="mailto:{{ issue.reporter_email }}?subject=Re: {{ issue.tracking_code }}" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    Contact Reporter
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Issue Details Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Issue Details</h2>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <p class="text-sm text-gray-500">Issue Type</p>
+                        <p class="font-medium text-gray-900">{{ issue.get_issue_type_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Priority</p>
+                        <p class="font-medium flex items-center gap-2">
+                            {{ issue.priority_emoji|safe }}
+                            {{ issue.get_priority_display }}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Location</p>
+                        <p class="font-medium text-gray-900">{{ issue.location }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Reported By</p>
+                        <p class="font-medium text-gray-900">
+                            {% if issue.is_anonymous %}
+                                <span class="text-gray-400">Anonymous</span>
+                            {% else %}
+                                {{ issue.reporter_name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <p class="text-sm text-gray-500 mb-2">Description</p>
+                    <p class="text-gray-700 whitespace-pre-wrap">{{ issue.description }}</p>
+                </div>
+                
+                {% if issue.latitude and issue.longitude %}
+                <div class="mb-6">
+                    <p class="text-sm text-gray-500 mb-2">Coordinates</p>
+                    <p class="text-gray-700 font-mono text-sm">
+                        {{ issue.latitude }}, {{ issue.longitude }}
+                        {% if issue.location_accuracy %}
+                            (Accuracy: {{ issue.location_accuracy }}m)
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Status Update Form -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Add Update</h2>
+                
+                <form method="POST" action="{% url 'tracking:update_status' issue.pk %}" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label for="id_new_status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="new_status" id="id_new_status" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required>
+                            <option value="">Select status...</option>
+                            <option value="pending">Pending Review</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="awaiting_parts">Awaiting Parts</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="verified">Verified by Reporter</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="id_updated_by" class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                        <input type="text" name="updated_by" id="id_updated_by" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Staff member name" required>
+                    </div>
+                    <div>
+                        <label for="id_message" class="block text-sm font-medium text-gray-700 mb-1">Update Message</label>
+                        <textarea name="message" id="id_message" rows="3" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Describe the progress made..." required></textarea>
+                    </div>
+                    <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors">
+                        Post Update
+                    </button>
+                </form>
+            </div>
+
+            <!-- Timeline -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Status Timeline</h2>
+                
+                <div class="relative">
+                    <!-- Timeline line -->
+                    <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                    
+                    <!-- Timeline items -->
+                    <div class="space-y-6" id="timeline-container">
+                        {% for update in status_updates %}
+                        <div class="relative pl-10">
+                            <!-- Timeline dot -->
+                            <div class="absolute left-2.5 top-1 w-3 h-3 rounded-full border-2 border-white timeline-dot-{{ update.new_status }}"></div>
+                            
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium status-badge-{{ update.new_status }}">
+                                        {{ update.get_new_status_display }}
+                                    </span>
+                                    <span class="text-xs text-gray-400">{{ update.timestamp|date:'M d, Y H:i' }}</span>
+                                </div>
+                                <p class="text-gray-700">{{ update.message }}</p>
+                                <p class="text-xs text-gray-500 mt-2">by {{ update.updated_by }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-8 text-gray-500">
+                            <i data-lucide="clock" class="w-12 h-12 mx-auto text-gray-300 mb-2"></i>
+                            <p>No updates yet</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Issue Meta -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Issue Information</h3>
+                
+                <dl class="space-y-4">
+                    <div>
+                        <dt class="text-sm text-gray-500">Tracking Code</dt>
+                        <dd class="font-mono font-medium text-purple-600">{{ issue.tracking_code }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-gray-500">Status</dt>
+                        <dd>{{ issue.get_status_display }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-gray-500">Priority</dt>
+                        <dd class="flex items-center gap-2">
+                            {{ issue.priority_emoji|safe }} {{ issue.get_priority_display }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-gray-500">Type</dt>
+                        <dd>{{ issue.get_issue_type_display }}</dd>
+                    </div>
+                    {% if issue.assigned_department %}
+                    <div>
+                        <dt class="text-sm text-gray-500">Department</dt>
+                        <dd>{{ issue.assigned_department.name }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if issue.assigned_staff %}
+                    <div>
+                        <dt class="text-sm text-gray-500">Assigned To</dt>
+                        <dd>{{ issue.assigned_staff }}</dd>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <dt class="text-sm text-gray-500">Created</dt>
+                        <dd>{{ issue.created_at|date:'M d, Y H:i' }}</dd>
+                    </div>
+                    {% if issue.resolved_at %}
+                    <div>
+                        <dt class="text-sm text-gray-500">Resolved</dt>
+                        <dd>{{ issue.resolved_at|date:'M d, Y H:i' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-gray-500">Resolution Time</dt>
+                        <dd>{{ issue.resolution_time }} hours</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <!-- SLA Status -->
+            {% if issue.sla_due_at %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">SLA Status</h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Due Date</span>
+                        <span class="font-medium">{{ issue.sla_due_at|date:'M d, Y H:i' }}</span>
+                    </div>
+                    {% if issue.status not in 'resolved' and issue.status not in 'closed' %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Time Remaining</span>
+                        {% if sla_countdown %}
+                            {% if sla_countdown > 0 %}
+                                <span class="font-medium {% if sla_countdown < 4 %}text-red-600{% else %}text-green-600{% endif %}">
+                                    {{ sla_countdown|floatformat:1 }} hours
+                                </span>
+                            {% else %}
+                                <span class="font-medium text-red-600">Breached</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="font-medium text-gray-400">N/A</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Community Engagement -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Community Support</h3>
+                
+                <div class="flex items-center gap-6 mb-4">
+                    <button onclick="voteIssue('up')" id="vote-up-btn" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors {% if has_voted_up %}bg-green-100 text-green-700{% endif %}">
+                        <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                        <span id="upvotes">{{ issue.upvotes }}</span>
+                    </button>
+                    <button onclick="voteIssue('down')" id="vote-down-btn" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors {% if has_voted_down %}bg-red-100 text-red-700{% endif %}">
+                        <i data-lucide="thumbs-down" class="w-5 h-5"></i>
+                        <span id="downvotes">{{ issue.downvotes }}</span>
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-500">
+                    {{ issue.upvotes|add:issue.downvotes }} people have voted on this issue
+                </p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+                
+                <div class="space-y-2">
+                    <a href="{% url 'reporting:add_comment' issue.pk %}" class="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                        <i data-lucide="message-square" class="w-5 h-5 text-gray-500"></i>
+                        Add Comment
+                    </a>
+                    {% if issue.status == 'resolved' %}
+                    <form method="POST" action="{% url 'tracking:update_status' issue.pk %}" class="w-full">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_status" value="verified">
+                        <input type="hidden" name="updated_by" value="Reporter">
+                        <input type="hidden" name="message" value="Reporter verified the resolution">
+                        <button type="submit" class="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-green-50 transition-colors text-green-700">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            Verify Resolution
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-submitted { background-color: #f3e8ff; color: #7c3aed; }
+.status-pending { background-color: #fef3c7; color: #d97706; }
+.status-in_progress { background-color: #dbeafe; color: #2563eb; }
+.status-awaiting_parts { background-color: #fce7f3; color: #db2777; }
+.status-scheduled { background-color: #cffafe; color: #0891b2; }
+.status-resolved { background-color: #d1fae5; color: #059669; }
+.status-verified { background-color: #d1fae5; color: #047857; }
+.status-closed { background-color: #f3f4f6; color: #4b5563; }
+
+.timeline-dot-resolved { background-color: #10b981; }
+.timeline-dot-in_progress { background-color: #3b82f6; }
+.timeline-dot-closed { background-color: #6b7280; }
+.timeline-dot-pending { background-color: #f59e0b; }
+
+.status-badge-resolved { background-color: #d1fae5; color: #059669; }
+.status-badge-in_progress { background-color: #dbeafe; color: #2563eb; }
+.status-badge-closed { background-color: #f3f4f6; color: #4b5563; }
+.status-badge-pending { background-color: #fef3c7; color: #d97706; }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var trackingCode = "{{ issue.tracking_code|escapejs }}";
+var issuePk = {{ issue.pk }};
+var csrfToken = "{{ csrf_token }}";
+
+function copyTrackingCode() {
+    navigator.clipboard.writeText(trackingCode).then(function() {
+        alert('Tracking code copied to clipboard!');
+    });
+}
+
+function voteIssue(voteType) {
+    var url = '/reporting/issue/' + issuePk + '/vote/';
+    var formData = new FormData();
+    formData.append('vote_type', voteType);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        document.getElementById('upvotes').textContent = data.upvotes;
+        document.getElementById('downvotes').textContent = data.downvotes;
+        location.reload();
+    })
+    .catch(function(err) { console.error('Vote failed:', err); });
+}
+
+function connectTimelineUpdates() {
+    if (typeof EventSource === 'undefined') {
+        return;
+    }
+    
+    var eventSource = new EventSource('/tracking/issue/' + issuePk + '/timeline/');
+    
+    eventSource.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+        
+        if (data.type === 'update') {
+            location.reload();
+        }
+    };
+    
+    eventSource.onerror = function() {
+        console.log('SSE connection lost, reconnecting...');
+        setTimeout(connectTimelineUpdates, 5000);
+    };
+}
+
+setTimeout(function() { 
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}, 100);
+
+if (document.getElementById('timeline-container')) {
+    connectTimelineUpdates();
+}
+</script>
+{% endblock %}

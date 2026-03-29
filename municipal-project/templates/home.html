@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}KimConnect - Sol Plaatje Municipal Services{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 text-white overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+            </pattern>
+            <rect width="100" height="100" fill="url(#grid)"/>
+        </svg>
+    </div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div class="text-center max-w-3xl mx-auto">
+            <!-- Logo -->
+            <div class="mb-8">
+                <img src="{% static 'municipal_service/Images/logo.png' %}" 
+                     alt="KimConnect Logo" 
+                     class="h-24 md:h-32 mx-auto drop-shadow-lg"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <div class="hidden w-24 h-24 md:w-32 md:h-32 mx-auto bg-white rounded-2xl flex items-center justify-center shadow-lg">
+                    <span class="text-4xl md:text-5xl">🏛️</span>
+                </div>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                Report Community Issues in <span class="text-yellow-300">Kimberley</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto">
+                Help improve Sol Plaatje Municipality. Report water leaks, potholes, streetlights & more in under 2 minutes.
+            </p>
+
+            <!-- Search Bar -->
+            <div class="max-w-2xl mx-auto mb-8">
+                <form action="{% url 'reporting:issue_list' %}" method="GET" class="relative">
+                    <input type="text" name="q" placeholder="Search issues by location or type..."
+                           class="w-full px-6 py-4 pr-14 text-gray-900 rounded-2xl shadow-2xl text-lg focus:ring-4 focus:ring-purple-300 focus:outline-none"
+                           style="min-height: 60px;">
+                    <button type="submit" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+                            style="min-height: 48px; min-width: 48px;"
+                            aria-label="Search issues">
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'reporting:report_issue' %}" 
+                   class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-purple-700 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
+                   style="min-height: 56px;">
+                    <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                    Report an Issue
+                </a>
+                <a href="{% url 'reporting:track_issue' %}" 
+                   class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-purple-500/30 backdrop-blur text-white border-2 border-white/30 rounded-xl font-bold text-lg hover:bg-purple-500/50 transition-all"
+                   style="min-height: 56px;">
+                    <i data-lucide="search" class="w-6 h-6"></i>
+                    Track Your Issue
+                </a>
+            </div>
+
+            <!-- Trust Indicators -->
+            <div class="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-purple-200">
+                <span class="flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    Official Sol Plaatje Platform
+                </span>
+                <span class="flex items-center gap-2">
+                    <i data-lucide="clock" class="w-5 h-5"></i>
+                    24/7 Reporting
+                </span>
+                <span class="flex items-center gap-2">
+                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    GPS Location
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wave Bottom -->
+    <div class="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+        </svg>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="bg-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="text-center p-6 bg-gray-50 rounded-2xl">
+                <p class="text-4xl font-bold text-purple-600">{{ stats.total|default:"0" }}</p>
+                <p class="text-gray-600 mt-1">Issues Reported</p>
+            </div>
+            <div class="text-center p-6 bg-gray-50 rounded-2xl">
+                <p class="text-4xl font-bold text-blue-600">{{ stats.resolved|default:"0" }}</p>
+                <p class="text-gray-600 mt-1">Issues Resolved</p>
+            </div>
+            <div class="text-center p-6 bg-gray-50 rounded-2xl">
+                <p class="text-4xl font-bold text-green-600">{{ stats.in_progress|default:"0" }}</p>
+                <p class="text-gray-600 mt-1">In Progress</p>
+            </div>
+            <div class="text-center p-6 bg-gray-50 rounded-2xl">
+                <p class="text-4xl font-bold text-yellow-600"><2 min</p>
+                <p class="text-gray-600 mt-1">Avg Report Time</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive Map Section -->
+<div class="bg-gray-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">📍 Community Issues Map</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                See where issues are being reported across Kimberley. Click on markers to view details.
+            </p>
+        </div>
+
+        <!-- Map Container -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div id="home-map" class="w-full h-96 md:h-[500px]" data-issues="{{ map_issues_json|default:'[]' }}"></div>
+            
+            <!-- Map Legend -->
+            <div class="p-4 bg-white border-t border-gray-100 flex flex-wrap gap-4 justify-center text-sm">
+                <span class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full bg-red-500"></span>
+                    Urgent
+                </span>
+                <span class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full bg-orange-500"></span>
+                    High Priority
+                </span>
+                <span class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full bg-yellow-500"></span>
+                    Medium Priority
+                </span>
+                <span class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full bg-blue-500"></span>
+                    In Progress
+                </span>
+                <span class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full bg-green-500"></span>
+                    Resolved
+                </span>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center">
+            <a href="{% url 'reporting:issue_list' %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+               style="min-height: 48px;">
+                View All Issues
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">How KimConnect Works</h2>
+            <p class="text-gray-600">Report, track, and resolve community issues in 3 simple steps</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Step 1 -->
+            <div class="text-center p-8 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl">
+                <div class="w-16 h-16 bg-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+                    1
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Report</h3>
+                <p class="text-gray-600">
+                    Submit your issue with photo, GPS location, and description in under 2 minutes.
+                </p>
+                <div class="mt-4 flex justify-center gap-2 text-2xl">
+                    <span>📱</span>
+                    <span>📷</span>
+                    <span>📍</span>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="text-center p-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
+                <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+                    2
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Track</h3>
+                <p class="text-gray-600">
+                    Get a unique tracking code (SP-XXXXXX) and receive real-time email updates.
+                </p>
+                <div class="mt-4 flex justify-center gap-2 text-2xl">
+                    <span>🔍</span>
+                    <span>📧</span>
+                    <span>🔔</span>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="text-center p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl">
+                <div class="w-16 h-16 bg-green-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+                    3
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Resolved</h3>
+                <p class="text-gray-600">
+                    Sol Plaatje departments address your issue and notify you when complete.
+                </p>
+                <div class="mt-4 flex justify-center gap-2 text-2xl">
+                    <span>✅</span>
+                    <span>🏛️</span>
+                    <span>🎉</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Types -->
+<div class="bg-gray-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">What Can You Report?</h2>
+            <p class="text-gray-600">Common issues affecting Kimberley residents</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <a href="{% url 'reporting:report_issue' %}?type=water" class="p-6 bg-white rounded-2xl text-center hover:shadow-lg transition-shadow group">
+                <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💧</div>
+                <p class="font-medium text-gray-900">Water</p>
+                <p class="text-xs text-gray-500 mt-1">Leaks, supply</p>
+            </a>
+            <a href="{% url 'reporting:report_issue' %}?type=electricity" class="p-6 bg-white rounded-2xl text-center hover:shadow-lg transition-shadow group">
+                <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">⚡</div>
+                <p class="font-medium text-gray-900">Electricity</p>
+                <p class="text-xs text-gray-500 mt-1">Outages, faults</p>
+            </a>
+            <a href="{% url 'reporting:report_issue' %}?type=pothole" class="p-6 bg-white rounded-2xl text-center hover:shadow-lg transition-shadow group">
+                <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🕳️</div>
+                <p class="font-medium text-gray-900">Potholes</p>
+                <p class="text-xs text-gray-500 mt-1">Road damage</p>
+            </a>
+            <a href="{% url 'reporting:report_issue' %}?type=waste" class="p-6 bg-white rounded-2xl text-center hover:shadow-lg transition-shadow group">
+                <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🗑️</div>
+                <p class="font-medium text-gray-900">Waste</p>
+                <p class="text-xs text-gray-500 mt-1">Collection, dumping</p>
+            </a>
+            <a href="{% url 'reporting:report_issue' %}?type=streetlight" class="p-6 bg-white rounded-2xl text-center hover:shadow-lg transition-shadow group">
+                <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💡</div>
+                <p class="font-medium text-gray-900">Street Lights</p>
+                <p class="text-xs text-gray-500 mt-1">Broken, out</p>
+            </a>
+            <a href="{% url 'reporting:report_issue' %}?type=other" class="p-6 bg-white rounded-2xl text-center hover:shadow-lg transition-shadow group">
+                <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">📍</div>
+                <p class="font-medium text-gray-900">Other</p>
+                <p class="text-xs text-gray-500 mt-1">Any issue</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Issues Preview -->
+{% if recent_issues %}
+<div class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Recent Issues</h2>
+                <p class="text-gray-600 mt-1">Latest reports from the community</p>
+            </div>
+            <a href="{% url 'reporting:issue_list' %}" class="text-purple-600 font-medium hover:underline">
+                View All →
+            </a>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            {% for issue in recent_issues %}
+            <div class="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition-shadow">
+                <div class="flex items-start justify-between mb-4">
+                    <span class="text-3xl">
+                        {% if issue.issue_type == 'water' %}💧
+                        {% elif issue.issue_type == 'electricity' %}⚡
+                        {% elif issue.issue_type == 'pothole' %}🕳️
+                        {% elif issue.issue_type == 'waste' %}🗑️
+                        {% elif issue.issue_type == 'streetlight' %}💡
+                        {% else %}📍{% endif %}
+                    </span>
+                    <span class="px-3 py-1 text-xs font-medium rounded-full
+                        {% if issue.status == 'pending' %}bg-yellow-100 text-yellow-700
+                        {% elif issue.status == 'in_progress' %}bg-blue-100 text-blue-700
+                        {% elif issue.status == 'resolved' %}bg-green-100 text-green-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ issue.get_status_display }}
+                    </span>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{{ issue.title|truncatechars:50 }}</h3>
+                <p class="text-sm text-gray-500 mb-4">
+                    <i data-lucide="map-pin" class="w-4 h-4 inline"></i>
+                    {{ issue.location|truncatechars:30 }}
+                </p>
+                <p class="text-xs text-gray-400">{{ issue.created_at|timesince }} ago</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- CTA Section -->
+<div class="bg-gradient-to-br from-purple-600 to-indigo-700 text-white py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to Make a Difference?</h2>
+        <p class="text-xl text-purple-100 mb-8">
+            Join thousands of Kimberley residents helping improve our community.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'reporting:report_issue' %}" 
+               class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-purple-700 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
+               style="min-height: 56px;">
+                <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                Report an Issue Now
+            </a>
+            <a href="{% url 'reporting:issue_list' %}" 
+               class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-purple-500/30 backdrop-blur text-white border-2 border-white/30 rounded-xl font-bold text-lg hover:bg-purple-500/50 transition-all"
+               style="min-height: 56px;">
+                <i data-lucide="list" class="w-6 h-6"></i>
+                Browse Issues
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|default:'' }}&callback=initMap" async defer></script>
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Map initialization
+    function initMap() {
+        // Kimberley coordinates
+        const kimberley = { lat: -28.7282, lng: 24.7499 };
+        
+        const map = new google.maps.Map(document.getElementById('home-map'), {
+            zoom: 13,
+            center: kimberley,
+            mapTypeId: 'roadmap',
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+            },
+            streetViewControl: true,
+            fullscreenControl: true,
+        });
+
+        // Issue data from data attribute
+        const mapElement = document.getElementById('home-map');
+        const issuesData = mapElement.getAttribute('data-issues');
+        const issues = issuesData ? JSON.parse(issuesData) : [];
+        
+        // Marker colors by status/priority
+        const markerColors = {
+            'urgent': 'red',
+            'high': 'orange',
+            'medium': 'yellow',
+            'low': 'blue',
+            'pending': 'yellow',
+            'in_progress': 'blue',
+            'resolved': 'green',
+            'closed': 'gray'
+        };
+
+        // Add markers for each issue
+        issues.forEach(function(issue) {
+            if (issue.lat && issue.lng) {
+                const color = markerColors[issue.priority] || markerColors[issue.status] || 'blue';
+                
+                const marker = new google.maps.Marker({
+                    position: { lat: parseFloat(issue.lat), lng: parseFloat(issue.lng) },
+                    map: map,
+                    title: issue.title,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        strokeWeight: 2,
+                        strokeColor: '#fff',
+                        scale: 10
+                    }
+                });
+
+                // Info window
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="max-width: 250px; padding: 10px;">
+                            <h4 style="margin: 0 0 8px 0; font-weight: bold;">${issue.title}</h4>
+                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">
+                                <strong>${issue.tracking_code}</strong> • ${issue.status}
+                            </p>
+                            <p style="margin: 0; font-size: 12px;">${issue.location}</p>
+                            <a href="/tracking/issue/${issue.id}/" style="color: #7c3aed; text-decoration: none; font-size: 12px;">View Details →</a>
+                        </div>
+                    `
+                });
+
+                marker.addListener('click', function() {
+                    infoWindow.open(map, marker);
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

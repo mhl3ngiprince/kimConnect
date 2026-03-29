@@ -1,0 +1,315 @@
+<!-- Volunteer Coordination Component -->
+<div x-data="{
+    activeTab: 'opportunities',
+    showSignupModal: false,
+    showDetailModal: false,
+    selectedOpportunity: null,
+    
+    opportunities: [
+        {
+            id: 1,
+            title: 'Community Clean-up Day',
+            description: 'Join us for a community clean-up in Galeshewe. Help keep our streets clean!',
+            date: '2024-04-15',
+            time: '08:00 - 12:00',
+            location: 'Galeshewe Community Hall',
+            spots: 20,
+            filled: 12,
+            skills: ['General Labor', 'Team Work'],
+            urgency: 'high'
+        },
+        {
+            id: 2,
+            title: 'Water Leak Detection Training',
+            description: 'Learn how to identify and report water leaks in your area. Free training provided.',
+            date: '2024-04-20',
+            time: '09:00 - 14:00',
+            location: 'Municipal Training Center',
+            spots: 30,
+            filled: 8,
+            skills: ['Attention to Detail', 'Basic Tech'],
+            urgency: 'medium'
+        },
+        {
+            id: 3,
+            title: 'Elderly Assistance Program',
+            description: 'Help elderly residents submit municipal service requests online.',
+            date: '2024-04-22',
+            time: '10:00 - 15:00',
+            location: 'Various Locations',
+            spots: 15,
+            filled: 5,
+            skills: ['Patience', 'Basic Tech', 'Communication'],
+            urgency: 'low'
+        },
+    ],
+    
+    volunteerProfile: null,
+    myHours: 24,
+    myEvents: 3,
+    impactScore: 85,
+    
+    async loadProfile() {
+        try {
+            const response = await fetch('/api/volunteer/profile/');
+            const data = await response.json();
+            this.volunteerProfile = data;
+        } catch (e) {
+            // Demo data
+            this.volunteerProfile = {
+                name: 'Community Volunteer',
+                hours: 24,
+                events: 3,
+                impact: 85
+            };
+        }
+    },
+    
+    apply(opportunity) {
+        this.selectedOpportunity = opportunity;
+        this.showDetailModal = true;
+    },
+    
+    confirmSignup() {
+        // API call to sign up
+        this.showDetailModal = false;
+        this.showSignupModal = true;
+        
+        // Update spots
+        if (this.selectedOpportunity) {
+            this.selectedOpportunity.filled++;
+        }
+    },
+    
+    formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+}" x-init="loadProfile()" class="space-y-6">
+
+    <!-- Volunteer Stats -->
+    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg">
+        <div class="flex items-start justify-between">
+            <div>
+                <h3 class="text-emerald-100 text-sm font-medium">Your Impact</h3>
+                <p class="text-4xl font-bold mt-1" x-text="volunteerProfile?.name || 'Community Hero'"></p>
+            </div>
+            <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                <i data-lucide="heart-handshake" class="w-8 h-8"></i>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4 mt-6">
+            <div class="text-center">
+                <p class="text-3xl font-bold" x-text="myHours"></p>
+                <p class="text-emerald-100 text-sm">Hours Volunteered</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold" x-text="myEvents"></p>
+                <p class="text-emerald-100 text-sm">Events Attended</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold" x-text="impactScore + '%'"></p>
+                <p class="text-emerald-100 text-sm">Impact Score</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-200 dark:border-gray-700">
+        <button @click="activeTab = 'opportunities'" 
+                class="flex-1 py-3 px-4 text-center font-medium transition-colors"
+                :class="activeTab === 'opportunities' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'">
+            📋 Opportunities
+        </button>
+        <button @click="activeTab = 'myEvents'" 
+                class="flex-1 py-3 px-4 text-center font-medium transition-colors"
+                :class="activeTab === 'myEvents' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'">
+            📅 My Events
+        </button>
+        <button @click="activeTab = 'community'" 
+                class="flex-1 py-3 px-4 text-center font-medium transition-colors"
+                :class="activeTab === 'community' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'">
+            🌍 Community
+        </button>
+    </div>
+
+    <!-- Opportunities Tab -->
+    <div x-show="activeTab === 'opportunities'" class="space-y-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Available Opportunities</h3>
+            <button class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700">
+                <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i>
+                Create Event
+            </button>
+        </div>
+
+        <template x-for="opp in opportunities" :key="opp.id">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <h4 class="font-bold text-gray-900 dark:text-white" x-text="opp.title"></h4>
+                        <p class="text-sm text-gray-500 mt-1" x-text="opp.description"></p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full"
+                          :class="{
+                              'bg-red-100 text-red-700': opp.urgency === 'high',
+                              'bg-amber-100 text-amber-700': opp.urgency === 'medium',
+                              'bg-green-100 text-green-700': opp.urgency === 'low'
+                          }"
+                          x-text="opp.urgency"></span>
+                </div>
+                
+                <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <div class="flex items-center gap-1">
+                        <i data-lucide="calendar" class="w-4 h-4"></i>
+                        <span x-text="formatDate(opp.date)"></span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span x-text="opp.time"></span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        <span x-text="opp.location"></span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <template x-for="skill in opp.skills" :key="skill">
+                        <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full" x-text="skill"></span>
+                    </template>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-500">Spots filled:</span>
+                        <span class="font-semibold text-gray-900 dark:text-white" x-text="opp.filled + '/' + opp.spots"></span>
+                        <div class="w-20 h-2 bg-gray-100 dark:bg-gray-700 rounded-full mt-1">
+                            <div class="h-full bg-primary-500 rounded-full" 
+                                 :style="'width: ' + (opp.filled / opp.spots * 100) + '%'"></div>
+                        </div>
+                    </div>
+                    <button @click="apply(opp)" 
+                            class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors">
+                        Sign Up
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- My Events Tab -->
+    <div x-show="activeTab === 'myEvents'" class="space-y-4">
+        <h3 class="font-semibold text-gray-900 dark:text-white">Your Upcoming Events</h3>
+        
+        <div class="text-center py-12">
+            <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="calendar-check" class="w-10 h-10 text-emerald-600"></i>
+            </div>
+            <h4 class="font-semibold text-gray-900 dark:text-white">No upcoming events</h4>
+            <p class="text-sm text-gray-500 mt-1">Sign up for an opportunity to start volunteering!</p>
+        </div>
+    </div>
+
+    <!-- Community Tab -->
+    <div x-show="activeTab === 'community'" class="space-y-4">
+        <h3 class="font-semibold text-gray-900 dark:text-white">Top Volunteers</h3>
+        
+        <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span class="text-2xl">👑</span>
+                <div class="flex-1">
+                    <p class="font-semibold text-gray-900 dark:text-white">Thabo M.</p>
+                    <p class="text-xs text-gray-500">48 hours • 12 events</p>
+                </div>
+                <span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">#1</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span class="text-2xl">🥈</span>
+                <div class="flex-1">
+                    <p class="font-semibold text-gray-900 dark:text-white">Nomsa K.</p>
+                    <p class="text-xs text-gray-500">36 hours • 8 events</p>
+                </div>
+                <span class="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">#2</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <span class="text-2xl">🥉</span>
+                <div class="flex-1">
+                    <p class="font-semibold text-gray-900 dark:text-white">Lerato D.</p>
+                    <p class="text-xs text-gray-500">28 hours • 6 events</p>
+                </div>
+                <span class="px-2 py-1 bg-amber-200 text-amber-800 text-xs rounded-full">#3</span>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-100 dark:border-purple-800 mt-6">
+            <h4 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">🏆 Monthly Challenge</h4>
+            <p class="text-sm text-purple-700 dark:text-purple-300">Complete 3 volunteer events this month to earn the "Community Hero" badge!</p>
+            <div class="mt-3">
+                <div class="flex justify-between text-sm mb-1">
+                    <span>Progress</span>
+                    <span>1/3 events</span>
+                </div>
+                <div class="w-full h-2 bg-purple-200 dark:bg-purple-800 rounded-full">
+                    <div class="h-full bg-purple-600 rounded-full" style="width: 33%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Confirmation Modal -->
+    <div x-show="showDetailModal" x-cloak class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+             @click.away="showDetailModal = false">
+            <template x-if="selectedOpportunity">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white" x-text="selectedOpportunity.title"></h3>
+                    <p class="text-gray-500 mt-2" x-text="selectedOpportunity.description"></p>
+                    
+                    <div class="mt-4 space-y-2 text-sm">
+                        <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span x-text="formatDate(selectedOpportunity.date) + ' at ' + selectedOpportunity.time"></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            <span x-text="selectedOpportunity.location"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex gap-3">
+                        <button @click="showDetailModal = false" 
+                                class="flex-1 py-2 border border-gray-200 dark:border-gray-700 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700">
+                            Cancel
+                        </button>
+                        <button @click="confirmSignup()" 
+                                class="flex-1 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700">
+                            Confirm Sign Up
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div x-show="showSignupModal" x-cloak class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center"
+             @click.away="showSignupModal = false">
+            <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check" class="w-10 h-10 text-emerald-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">You're Signed Up!</h3>
+            <p class="text-gray-500 mt-2">We'll send you a reminder before the event. Thank you for volunteering!</p>
+            <button @click="showSignupModal = false" 
+                    class="mt-6 w-full py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700">
+                Got it!
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    [x-cloak] { display: none !important; }
+</style>

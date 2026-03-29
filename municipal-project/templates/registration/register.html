@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Account - KimConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-lg mx-auto">
+        <!-- Logo Section -->
+        <div class="text-center mb-8">
+            <div class="mb-6">
+                <img src="{% static 'municipal_service/Images/logo.png' %}" 
+                     alt="KimConnect Logo" 
+                     class="h-20 mx-auto"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <div class="hidden w-20 h-20 mx-auto bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <span class="text-4xl">🏛️</span>
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900">Create Account</h2>
+            <p class="mt-2 text-gray-600">Join KimConnect to report and track community issues</p>
+        </div>
+
+        <!-- Registration Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6" role="alert">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-medium text-red-800">Please fix the following errors:</h3>
+                        <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="POST" class="space-y-5">
+                {% csrf_token %}
+
+                <!-- Full Name -->
+                <div>
+                    <label for="id_full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="text" name="full_name" id="id_full_name" 
+                               class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                               placeholder="Enter your full name"
+                               required
+                               style="min-height: 48px;">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="id_email" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="email" name="email" id="id_email" 
+                               class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                               placeholder="your.email@example.com"
+                               required
+                               style="min-height: 48px;">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">We'll send tracking updates to this email</p>
+                </div>
+
+                <!-- Username -->
+                <div>
+                    <label for="id_username" class="block text-sm font-medium text-gray-700 mb-2">
+                        Username <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="at-sign" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="text" name="username" id="id_username" 
+                               class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                               placeholder="Choose a username"
+                               required minlength="3"
+                               style="min-height: 48px;">
+                    </div>
+                </div>
+
+                <!-- Phone (Optional) -->
+                <div>
+                    <label for="id_phone" class="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number <span class="text-gray-400">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="phone" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="tel" name="phone" id="id_phone" 
+                               class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                               placeholder="+27 XX XXX XXXX"
+                               style="min-height: 48px;">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="id_password1" class="block text-sm font-medium text-gray-700 mb-2">
+                        Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="password" name="password1" id="id_password1" 
+                               class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                               placeholder="Create a strong password"
+                               required minlength="8"
+                               style="min-height: 48px;">
+                        <button type="button" onclick="togglePassword('id_password1', 'eye-icon1')" 
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                aria-label="Toggle password visibility">
+                            <i data-lucide="eye" class="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer" id="eye-icon1"></i>
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Minimum 8 characters with letters and numbers</p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="id_password2" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="password" name="password2" id="id_password2" 
+                               class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                               placeholder="Confirm your password"
+                               required
+                               style="min-height: 48px;">
+                        <button type="button" onclick="togglePassword('id_password2', 'eye-icon2')" 
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                aria-label="Toggle password visibility">
+                            <i data-lucide="eye" class="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer" id="eye-icon2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ward/Area -->
+                <div>
+                    <label for="id_ward" class="block text-sm font-medium text-gray-700 mb-2">
+                        Your Area/Ward <span class="text-gray-400">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <select name="ward" id="id_ward" 
+                                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all appearance-none bg-white"
+                                style="min-height: 48px;">
+                            <option value="">Select your area...</option>
+                            <option value="galeshewe">Galeshewe</option>
+                            <option value="roodepan">Roodepan</option>
+                            <option value="beaconsfield">Beaconsfield</option>
+                            <option value="kimberley_north">Kimberley North</option>
+                            <option value="kimberley_cbd">Kimberley CBD</option>
+                            <option value="floors">Floors</option>
+                            <option value="homevale">Homevale</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms Checkbox -->
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" name="agree_terms" id="id_agree_terms" 
+                           class="mt-1 w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                           required>
+                    <label for="id_agree_terms" class="text-sm text-gray-600">
+                        I agree to the <a href="#" class="text-purple-600 hover:underline">Terms of Service</a> 
+                        and <a href="#" class="text-purple-600 hover:underline">Privacy Policy</a>. 
+                        I understand that my reports may be visible to the public.
+                    </label>
+                </div>
+
+                <!-- Newsletter Checkbox -->
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" name="newsletter" id="id_newsletter" 
+                           class="mt-1 w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                           checked>
+                    <label for="id_newsletter" class="text-sm text-gray-600">
+                        Send me email updates about my reported issues and community news
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" 
+                        class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl hover:bg-purple-700 transition-all"
+                        style="min-height: 52px;">
+                    <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    Create Account
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-white text-gray-500">Or sign up with</span>
+                </div>
+            </div>
+
+            <!-- Social Login Buttons -->
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" 
+                        class="flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                        style="min-height: 48px;">
+                    <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5">
+                    <span class="text-sm font-medium text-gray-700">Google</span>
+                </button>
+                <button type="button" 
+                        class="flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                        style="min-height: 48px;">
+                    <img src="https://www.facebook.com/favicon.ico" alt="Facebook" class="w-5 h-5">
+                    <span class="text-sm font-medium text-gray-700">Facebook</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Login Link -->
+        <div class="mt-6 text-center">
+            <p class="text-gray-600">
+                Already have an account?
+                <a href="{% url 'login' %}" class="text-purple-600 font-semibold hover:text-purple-700">
+                    Sign in
+                </a>
+            </p>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="mt-4 text-center">
+            <a href="{% url 'home' %}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Back to home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Toggle password visibility
+    function togglePassword(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const eyeIcon = document.getElementById(iconId);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.setAttribute('data-lucide', 'eye-off');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.setAttribute('data-lucide', 'eye');
+        }
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}

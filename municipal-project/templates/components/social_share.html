@@ -1,0 +1,233 @@
+<!-- Social Media Sharing Component -->
+<div x-data="{
+    showShareModal: false,
+    shareUrl: window.location.href,
+    shareTitle: 'KimConnect - Report Municipal Issues',
+    shareText: 'I just reported a municipal issue using KimConnect! Help improve our community.',
+    copied: false,
+    
+    socialPlatforms: [
+        { id: 'whatsapp', name: 'WhatsApp', icon: 'message-circle', color: 'bg-[#25D366]', hover: 'hover:bg-[#20BD5A]' },
+        { id: 'facebook', name: 'Facebook', icon: 'facebook', color: 'bg-[#1877F2]', hover: 'hover:bg-[#1864D9]' },
+        { id: 'twitter', name: 'Twitter', icon: 'twitter', color: 'bg-[#1DA1F2]', hover: 'hover:bg-[#1A8CD8]' },
+        { id: 'linkedin', name: 'LinkedIn', icon: 'linkedin', color: 'bg-[#0A66C2]', hover: 'hover:bg-[#09529B]' },
+        { id: 'telegram', name: 'Telegram', icon: 'send', color: 'bg-[#0088CC]', hover: 'hover:bg-[#0077B3]' },
+        { id: 'email', name: 'Email', icon: 'mail', color: 'bg-gray-500', hover: 'hover:bg-gray-600' },
+    ],
+    
+    shareTo(platform) {
+        const url = encodeURIComponent(this.shareUrl);
+        const title = encodeURIComponent(this.shareTitle);
+        const text = encodeURIComponent(this.shareText);
+        
+        let shareUrl = '';
+        
+        switch(platform) {
+            case 'whatsapp':
+                shareUrl = `https://wa.me/?text=${text}%20${url}`;
+                break;
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
+                break;
+            case 'linkedin':
+                shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+                break;
+            case 'telegram':
+                shareUrl = `https://t.me/share/url?url=${url}&text=${text}`;
+                break;
+            case 'email':
+                shareUrl = `mailto:?subject=${title}&body=${text}%20${url}`;
+                break;
+        }
+        
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'width=600,height=400');
+            this.trackShare(platform);
+        }
+    },
+    
+    async copyLink() {
+        try {
+            await navigator.clipboard.writeText(this.shareUrl);
+            this.copied = true;
+            setTimeout(() => this.copied = false, 2000);
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = this.shareUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.copied = true;
+            setTimeout(() => this.copied = false, 2000);
+        }
+        
+        this.trackShare('copy');
+    },
+    
+    trackShare(platform) {
+        // Analytics tracking
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'share', {
+                'method': platform,
+                'content_type': 'button',
+                'item_id': window.location.pathname
+            });
+        }
+        
+        // Send to backend
+        fetch('/api/analytics/share/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                platform: platform,
+                url: this.shareUrl,
+                page: window.location.pathname
+            })
+        });
+    },
+    
+    generateShareImage() {
+        // Generate OG image share text
+        return `
+KimConnect - Municipal Services
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Report issues. Track progress.
+Build a better Kimberley.
+
+${this.shareUrl}
+        `.trim();
+    }
+}" class="inline-block">
+
+    <!-- Share Button -->
+    <button @click="showShareModal = true" 
+            class="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+            aria-label="Share">
+        <i data-lucide="share-2" class="w-5 h-5 text-gray-600 dark:text-gray-400"></i>
+        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Share</span>
+    </button>
+
+    <!-- Share Modal -->
+    <div x-show="showShareModal" 
+         x-cloak
+         class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+             @click.away="showShareModal = false">
+            
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Share KimConnect</h3>
+                <p class="text-sm text-gray-500 mt-1">Help spread the word about municipal services</p>
+            </div>
+            
+            <!-- Social Platforms -->
+            <div class="p-6">
+                <div class="grid grid-cols-3 gap-4">
+                    <template x-for="platform in socialPlatforms" :key="platform.id">
+                        <button @click="shareTo(platform.id)" 
+                                class="flex flex-col items-center gap-2 p-4 rounded-xl transition-all hover:scale-105"
+                                :class="platform.color + ' ' + platform.hover + ' text-white'">
+                            <i :data-lucide="platform.icon" class="w-6 h-6"></i>
+                            <span class="text-sm font-medium" x-text="platform.name"></span>
+                        </button>
+                    </template>
+                </div>
+                
+                <!-- Copy Link -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Or copy link
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" 
+                               :value="shareUrl" 
+                               readonly
+                               class="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm">
+                        <button @click="copyLink()" 
+                                class="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors flex items-center gap-2">
+                            <i :data-lucide="copied ? 'check' : 'copy'" class="w-4 h-4"></i>
+                            <span class="text-sm" x-text="copied ? 'Copied!' : 'Copy'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <p class="text-xs text-gray-500 text-center">
+                    By sharing, you help more citizens access municipal services
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Share Button (for issue pages) -->
+<div x-data="{
+    expanded: false,
+    
+    shareIssue(platform) {
+        const issueId = window.location.pathname.split('/').pop();
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent(`I reported issue #${issueId} via KimConnect. Track it here: `);
+        
+        let shareUrl = '';
+        switch(platform) {
+            case 'whatsapp':
+                shareUrl = `https://wa.me/?text=${text}${url}`;
+                break;
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
+                break;
+        }
+        
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'width=600,height=400');
+        }
+        
+        this.expanded = false;
+    }
+}" class="fixed bottom-32 right-4 z-40">
+
+    <!-- Expanded Buttons -->
+    <div x-show="expanded" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="mb-2 space-y-2">
+        <button @click="shareIssue('whatsapp')" 
+                class="w-12 h-12 rounded-full bg-[#25D366] text-white shadow-lg hover:bg-[#20BD5A] transition-all flex items-center justify-center"
+                title="Share on WhatsApp">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+        </button>
+        <button @click="shareIssue('facebook')" 
+                class="w-12 h-12 rounded-full bg-[#1877F2] text-white shadow-lg hover:bg-[#1864D9] transition-all flex items-center justify-center"
+                title="Share on Facebook">
+            <i data-lucide="facebook" class="w-5 h-5"></i>
+        </button>
+        <button @click="shareIssue('twitter')" 
+                class="w-12 h-12 rounded-full bg-[#1DA1F2] text-white shadow-lg hover:bg-[#1A8CD8] transition-all flex items-center justify-center"
+                title="Share on Twitter">
+            <i data-lucide="twitter" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <!-- Main Button -->
+    <button @click="expanded = !expanded" 
+            class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+            :class="{'rotate-45': expanded}">
+        <i data-lucide="share-2" class="w-6 h-6"></i>
+    </button>
+</div>
+
+<style>
+    [x-cloak] { display: none !important; }
+</style>

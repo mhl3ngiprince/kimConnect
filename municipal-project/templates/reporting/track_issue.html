@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Track Your Issue - KimConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Track Your Issue</h1>
+        <p class="text-gray-500">Enter your tracking code to check the status of your reported issue</p>
+    </div>
+
+    <!-- Search Form -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <form method="GET" action="{% url 'reporting:track_issue' %}" class="flex gap-4">
+            <div class="flex-1">
+                <input type="text" name="code" value="{{ code|default:'' }}" 
+                       class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-lg"
+                       placeholder="e.g., SP-ABC123" required>
+            </div>
+            <button type="submit" class="px-6 py-4 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors" aria-label="Search">
+                <i data-lucide="search" class="w-5 h-5"></i>
+            </button>
+        </form>
+        
+        {% if error %}
+        <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+            {{ error }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Issue Found -->
+    {% if issue %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <p class="text-sm text-gray-500">Reference Number</p>
+                <p class="text-2xl font-bold text-purple-600">{{ issue.tracking_code }}</p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-sm font-medium status-{{ issue.status }}">
+                {{ issue.get_status_display }}
+            </span>
+        </div>
+        
+        <div class="space-y-4 mb-6">
+            <div class="flex justify-between py-2 border-b border-gray-100">
+                <span class="text-gray-500">Title</span>
+                <span class="font-medium">{{ issue.title }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-100">
+                <span class="text-gray-500">Type</span>
+                <span class="font-medium">{{ issue.get_issue_type_display }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-100">
+                <span class="text-gray-500">Priority</span>
+                <span class="font-medium flex items-center gap-2">
+                    {{ issue.priority_emoji|safe }} {{ issue.get_priority_display }}
+                </span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-100">
+                <span class="text-gray-500">Location</span>
+                <span class="font-medium">{{ issue.location }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-100">
+                <span class="text-gray-500">Reported</span>
+                <span class="font-medium">{{ issue.created_at|date:'M d, Y H:i' }}</span>
+            </div>
+            {% if issue.resolved_at %}
+            <div class="flex justify-between py-2 border-b border-gray-100">
+                <span class="text-gray-500">Resolved</span>
+                <span class="font-medium text-green-600">{{ issue.resolved_at|date:'M d, Y H:i' }}</span>
+            </div>
+            <div class="flex justify-between py-2">
+                <span class="text-gray-500">Resolution Time</span>
+                <span class="font-medium">{{ issue.resolution_time }} hours</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <a href="{% url 'tracking:issue_detail' issue.pk %}" 
+           class="block w-full text-center px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors">
+            View Full Details
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Help Section -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+        <h3 class="font-semibold text-blue-900 mb-3">Where to find your tracking code?</h3>
+        <ul class="text-sm text-blue-800 space-y-2">
+            <li class="flex items-start gap-2">
+                <i data-lucide="mail" class="w-4 h-4 mt-0.5 text-blue-600"></i>
+                Check your email confirmation - it starts with <strong>SP-</strong>
+            </li>
+            <li class="flex items-start gap-2">
+                <i data-lucide="message-square" class="w-4 h-4 mt-0.5 text-blue-600"></i>
+                SMS notifications also include your tracking code
+            </li>
+            <li class="flex items-start gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 mt-0.5 text-blue-600"></i>
+                Your receipt if you reported in person
+            </li>
+        </ul>
+    </div>
+</div>
+
+<style>
+.status-submitted { background-color: #f3e8ff; color: #7c3aed; }
+.status-pending { background-color: #fef3c7; color: #d97706; }
+.status-in_progress { background-color: #dbeafe; color: #2563eb; }
+.status-awaiting_parts { background-color: #fce7f3; color: #db2777; }
+.status-scheduled { background-color: #cffafe; color: #0891b2; }
+.status-resolved { background-color: #d1fae5; color: #059669; }
+.status-verified { background-color: #d1fae5; color: #047857; }
+.status-closed { background-color: #f3f4f6; color: #4b5563; }
+</style>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+setTimeout(function() { 
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}, 100);
+</script>
+{% endblock %}

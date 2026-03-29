@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Update</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #7C3AED, #EC4899); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">KimConnect</h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0;">Sol Plaatje Municipal Service Portal</p>
+    </div>
+    
+    <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb;">
+        <h2 style="color: #3B82F6; margin: 0 0 20px;">Issue Update</h2>
+        
+        <p style="margin: 0 0 20px;">Your reported issue has been updated. Here is the latest information:</p>
+        
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="font-size: 12px; color: #6b7280; margin: 0;">Reference Number</p>
+            <p style="font-size: 20px; font-weight: bold; color: #7C3AED; margin: 5px 0;">{{ tracking_code }}</p>
+        </div>
+        
+        <div style="background: #fef3c7; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="font-size: 14px; color: #6b7280; margin: 0;">Current Status</p>
+            <p style="font-size: 18px; font-weight: bold; margin: 5px 0; color: #d97706;">
+                {{ status|title }}
+            </p>
+        </div>
+        
+        {% if message %}
+        <div style="background: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="font-size: 14px; color: #6b7280; margin: 0;">Update Message</p>
+            <p style="margin: 10px 0 0;">{{ message }}</p>
+        </div>
+        {% endif %}
+        
+        <a href="#" style="display: inline-block; background: #7C3AED; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">View Full Details</a>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 14px;">
+                If you have any questions or the issue persists, please do not hesitate to contact us.
+            </p>
+        </div>
+    </div>
+    
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+        <p>Sol Plaatje Local Municipality, Kimberly, Northern Cape</p>
+        <p>You are receiving this email because you reported an issue with this email address.</p>
+    </div>
+</body>
+</html>

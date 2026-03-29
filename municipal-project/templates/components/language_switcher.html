@@ -1,0 +1,120 @@
+<!-- Language Switcher Component -->
+<div x-data="{ 
+    open: false,
+    currentLang: 'en',
+    languages: [
+        { code: 'en', name: 'English', flag: '🇬🇧', native: 'English' },
+        { code: 'af', name: 'Afrikaans', flag: '🇿🇦', native: 'Afrikaans' },
+        { code: 'xh', name: 'isiXhosa', flag: '🇿🇦', native: 'isiXhosa' },
+        { code: 'zu', name: 'isiZulu', flag: '🇿🇦', native: 'isiZulu' }
+    ],
+    translations: {
+        en: {
+            report: 'Report Issue',
+            track: 'Track Issue',
+            dashboard: 'Dashboard',
+            profile: 'My Profile',
+            settings: 'Settings',
+            help: 'Help & FAQ',
+            login: 'Sign In',
+            logout: 'Sign Out'
+        },
+        af: {
+            report: 'Dien Probleem In',
+            track: 'Volg Probleem',
+            dashboard: 'Beheerderpaneel',
+            profile: 'My Profiel',
+            settings: 'Instellings',
+            help: 'Hulp & Vrae',
+            login: 'Teken In',
+            logout: 'Teken Uit'
+        },
+        xh: {
+            report: 'Bika Ingxaki',
+            track: 'Landela Ingxaki',
+            dashboard: 'I-Dashboard',
+            profile: 'Iprofayili Yam',
+            settings: 'Izicwangciso',
+            help: 'Uncedo & FAQ',
+            login: 'Ngena',
+            logout: 'Phuma'
+        },
+        zu: {
+            report: 'Bika Inkinga',
+            track: 'Landela Inkinga',
+            dashboard: 'I-Dashboard',
+            profile: 'Iphrofayela Yami',
+            settings: 'Izilungiselelo',
+            help: 'Usizo & FAQ',
+            login: 'UNGENA',
+            logout: 'PHUMA'
+        }
+    }
+}" class="relative">
+    <!-- Language Button -->
+    <button 
+        @click="open = !open"
+        @click.away="open = false"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        aria-label="Change language"
+    >
+        <span class="text-lg" x-text="languages.find(l => l.code === currentLang)?.flag || '🌐'"></span>
+        <span class="text-sm font-medium text-gray-600 dark:text-gray-300" x-text="languages.find(l => l.code === currentLang)?.native || 'Language'"></span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 transition-transform" :class="{'rotate-180': open}"></i>
+    </button>
+    
+    <!-- Dropdown -->
+    <div 
+        x-show="open"
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="transform opacity-0 scale-95"
+        x-transition:enter-end="transform opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="transform opacity-100 scale-100"
+        x-transition:leave-end="transform opacity-0 scale-95"
+        class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50"
+        style="display: none;"
+    >
+        <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            {% trans "Select Language" %}
+        </div>
+        
+        <template x-for="lang in languages" :key="lang.code">
+            <button 
+                @click="currentLang = lang.code; open = false; $dispatch('lang-change', { lang: lang.code })"
+                :class="{'bg-primary-50 dark:bg-primary-900/30': currentLang === lang.code}"
+                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+                <span class="text-xl" x-text="lang.flag"></span>
+                <div class="text-left">
+                    <div class="font-medium text-gray-800 dark:text-white" x-text="lang.native"></div>
+                    <div class="text-xs text-gray-500" x-text="lang.name"></div>
+                </div>
+                <i x-show="currentLang === lang.code" data-lucide="check" class="w-4 h-4 text-primary-600 ml-auto"></i>
+            </button>
+        </template>
+        
+        <div class="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2">
+            <div class="px-4 py-2">
+                <p class="text-xs text-gray-500">🌍 KimConnect supports 4 South African languages</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Voice Language Selector (for speech recognition) -->
+<div x-data="{ 
+    voiceLang: 'en-ZA',
+    voices: [
+        { code: 'en-ZA', name: 'South African English', region: '🇿🇦' },
+        { code: 'af-ZA', name: 'South African Afrikaans', region: '🇿🇦' },
+        { code: 'en-US', name: 'American English', region: '🇺🇸' },
+        { code: 'en-GB', name: 'British English', region: '🇬🇧' }
+    ]
+}" class="hidden">
+    <select x-model="voiceLang" class="voice-lang-selector">
+        <template x-for="voice in voices" :key="voice.code">
+            <option :value="voice.code" x-text="voice.region + ' ' + voice.name"></option>
+        </template>
+    </select>
+</div>

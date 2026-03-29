@@ -1,0 +1,323 @@
+<!-- GIS Heatmap Visualization Component -->
+<div x-data="{
+    mapLoaded: false,
+    issues: [],
+    heatmapData: [],
+    selectedWard: 'all',
+    showFilters: false,
+    
+    wards: [
+        { id: 'all', name: 'All Areas', coords: [-28.754, 24.749] },
+        { id: 'galeshewe', name: 'Galeshewe', coords: [-28.738, 24.772] },
+        { id: 'roodepan', name: 'Roodepan', coords: [-28.752, 24.801] },
+        { id: 'kimberley_central', name: 'Kimberley Central', coords: [-28.754, 24.749] },
+        { id: 'beaconsfield', name: 'Beaconsfield', coords: [-28.762, 24.738] },
+        { id: 'elektif', name: 'Elektif', coords: [-28.745, 24.715] },
+        { id: 'diamond_fields', name: 'Diamond Fields', coords: [-28.759, 24.762] },
+    ],
+    
+    async initMap() {
+        if (this.mapLoaded) return;
+        
+        try {
+            // Load Leaflet.js
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
+            
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.onload = () => {
+                this.initLeafletMap();
+                this.mapLoaded = true;
+            };
+            document.head.appendChild(script);
+        } catch (e) {
+            console.error('Failed to load map:', e);
+        }
+    },
+    
+    initLeafletMap() {
+        // Initialize map centered on Kimberley
+        this.map = L.map('heatmap-container').setView([-28.754, 24.749], 12);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(this.map);
+        
+        // Load issue data
+        this.loadIssueData();
+    },
+    
+    async loadIssueData() {
+        try {
+            const response = await fetch('/api/issues/geo/');
+            const data = await response.json();
+            this.issues = data.issues || [];
+            this.updateHeatmap();
+            this.addMarkers();
+        } catch (e) {
+            console.error('Failed to load issues:', e);
+            // Load demo data
+            this.loadDemoData();
+        }
+    },
+    
+    loadDemoData() {
+        // Demo data for demonstration
+        this.issues = [
+            { lat: -28.738, lng: 24.772, type: 'water', severity: 'high', count: 15 },
+            { lat: -28.752, lng: 24.801, type: 'potholes', severity: 'medium', count: 23 },
+            { lat: -28.754, lng: 24.749, type: 'electricity', severity: 'high', count: 8 },
+            { lat: -28.762, lng: 24.738, type: 'water', severity: 'low', count: 5 },
+            { lat: -28.745, lng: 24.715, type: 'sanitation', severity: 'high', count: 12 },
+            { lat: -28.759, lng: 24.762, type: 'potholes', severity: 'medium', count: 18 },
+            { lat: -28.741, lng: 24.765, type: 'water', severity: 'high', count: 20 },
+            { lat: -28.756, lng: 24.785, type: 'electricity', severity: 'medium', count: 7 },
+        ];
+        this.updateHeatmap();
+        this.addMarkers();
+    },
+    
+    updateHeatmap() {
+        // Create heatmap layer
+        if (this.heatmapLayer) {
+            this.map.removeLayer(this.heatmapLayer);
+        }
+        
+        const heatData = this.issues.map(issue => [
+            issue.lat,
+            issue.lng,
+            issue.severity === 'high' ? 1.0 : issue.severity === 'medium' ? 0.5 : 0.2
+        ]);
+        
+        // Use simple circle markers for heat effect (without heatmap plugin)
+        this.heatmapLayer = L.layerGroup();
+        heatData.forEach((data, i) => {
+            const issue = this.issues[i];
+            const radius = issue.severity === 'high' ? 300 : issue.severity === 'medium' ? 200 : 100;
+            const color = issue.severity === 'high' ? '#EF4444' : issue.severity === 'medium' ? '#F59E0B' : '#10B981';
+            
+            L.circle([data[0], data[1]], {
+                radius: radius,
+                fillColor: color,
+                fillOpacity: 0.4,
+                stroke: false
+            }).addTo(this.heatmapLayer);
+        });
+        
+        this.heatmapLayer.addTo(this.map);
+    },
+    
+    addMarkers() {
+        if (this.markerLayer) {
+            this.map.removeLayer(this.markerLayer);
+        }
+        
+        this.markerLayer = L.layerGroup();
+        
+        this.issues.forEach(issue => {
+            const icon = this.createIssueIcon(issue.type, issue.severity);
+            const marker = L.marker([issue.lat, issue.lng], { icon });
+            
+            marker.bindPopup(`
+                <div class='p-2'>
+                    <h4 class='font-bold'>${issue.type.charAt(0).toUpperCase() + issue.type.slice(1)} Issue</h4>
+                    <p class='text-sm'>Severity: ${issue.severity}</p>
+                    <p class='text-sm'>Reports: ${issue.count || 1}</p>
+                </div>
+            `);
+            
+            marker.addTo(this.markerLayer);
+        });
+        
+        this.markerLayer.addTo(this.map);
+    },
+    
+    createIssueIcon(type, severity) {
+        const colors = {
+            water: '#3B82F6',
+            electricity: '#F59E0B',
+            potholes: '#6B7280',
+            sanitation: '#10B981',
+            roads: '#8B5CF6',
+            other: '#EC4899'
+        };
+        
+        const color = colors[type] || colors.other;
+        
+        return L.divIcon({
+            className: 'custom-marker',
+            html: `
+                <div style='
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background: ${color};
+                    border: 3px solid white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                '></div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+    },
+    
+    filterByWard(wardId) {
+        this.selectedWard = wardId;
+        const ward = this.wards.find(w => w.id === wardId);
+        
+        if (ward && wardId !== 'all') {
+            this.map.setView(ward.coords, 14);
+        } else {
+            this.map.setView([-28.754, 24.749], 12);
+        }
+    },
+    
+    toggleLayer(layer) {
+        if (layer === 'heatmap') {
+            if (this.heatmapLayer) {
+                if (this.map.hasLayer(this.heatmapLayer)) {
+                    this.map.removeLayer(this.heatmapLayer);
+                } else {
+                    this.heatmapLayer.addTo(this.map);
+                }
+            }
+        } else if (layer === 'markers') {
+            if (this.markerLayer) {
+                if (this.map.hasLayer(this.markerLayer)) {
+                    this.map.removeLayer(this.markerLayer);
+                } else {
+                    this.markerLayer.addTo(this.map);
+                }
+            }
+        }
+    }
+}" x-init="initMap()" class="space-y-4">
+
+    <!-- Map Controls -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <select x-model="selectedWard" 
+                    @change="filterByWard(selectedWard)"
+                    class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                <template x-for="ward in wards" :key="ward.id">
+                    <option :value="ward.id" x-text="ward.name"></option>
+                </template>
+            </select>
+            
+            <button @click="showFilters = !showFilters" 
+                    class="p-2 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700">
+                <i data-lucide="sliders-horizontal" class="w-5 h-5 text-gray-600 dark:text-gray-400"></i>
+            </button>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <button @click="toggleLayer('heatmap')" 
+                    class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+                    :class="heatmapLayer && map?.hasLayer(heatmapLayer) ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'">
+                🔥 Heatmap
+            </button>
+            <button @click="toggleLayer('markers')" 
+                    class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+                    :class="markerLayer && map?.hasLayer(markerLayer) ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
+                📍 Markers
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div x-show="showFilters" x-collapse class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+        <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Filter by Issue Type</h4>
+        <div class="flex flex-wrap gap-2">
+            <button class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm">💧 Water</button>
+            <button class="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm">⚡ Electricity</button>
+            <button class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm">🕳️ Potholes</button>
+            <button class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm">🚽 Sanitation</button>
+            <button class="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm">🛣️ Roads</button>
+        </div>
+        
+        <h4 class="font-semibold text-gray-900 dark:text-white mt-4 mb-3">Filter by Severity</h4>
+        <div class="flex gap-2">
+            <button class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm">High</button>
+            <button class="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm">Medium</button>
+            <button class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm">Low</button>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div id="heatmap-container" class="h-96 w-full"></div>
+        
+        <!-- Legend -->
+        <div class="absolute bottom-4 left-4 bg-white/95 dark:bg-gray-800/95 rounded-xl p-3 shadow-lg">
+            <h4 class="font-semibold text-sm text-gray-900 dark:text-white mb-2">Issue Density</h4>
+            <div class="flex items-center gap-2 text-xs">
+                <div class="flex items-center gap-1">
+                    <div class="w-4 h-4 rounded-full bg-red-500 opacity-60"></div>
+                    <span>High</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-4 h-4 rounded-full bg-amber-500 opacity-60"></div>
+                    <span>Medium</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-4 h-4 rounded-full bg-green-500 opacity-60"></div>
+                    <span>Low</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading Overlay -->
+        <div x-show="!mapLoaded" class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div class="text-center">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-primary-600 mx-auto mb-2"></i>
+                <p class="text-sm text-gray-500">Loading map...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotspot Summary -->
+    <div class="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl p-4 border border-red-100 dark:border-red-800">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
+            </div>
+            <div>
+                <h4 class="font-semibold text-red-900 dark:text-red-100">Hotspot Detected</h4>
+                <p class="text-sm text-red-700 dark:text-red-300">Galeshewe Ward has 3x the normal issue reports. Consider additional resources.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issue Type Distribution -->
+    <div class="grid grid-cols-5 gap-2">
+        <div class="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p class="text-2xl">💧</p>
+            <p class="text-xs font-medium text-blue-700">Water</p>
+            <p class="text-lg font-bold text-blue-600" x-text="issues.filter(i => i.type === 'water').length"></p>
+        </div>
+        <div class="text-center p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+            <p class="text-2xl">⚡</p>
+            <p class="text-xs font-medium text-amber-700">Electricity</p>
+            <p class="text-lg font-bold text-amber-600" x-text="issues.filter(i => i.type === 'electricity').length"></p>
+        </div>
+        <div class="text-center p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <p class="text-2xl">🕳️</p>
+            <p class="text-xs font-medium text-gray-700">Potholes</p>
+            <p class="text-lg font-bold text-gray-600" x-text="issues.filter(i => i.type === 'potholes').length"></p>
+        </div>
+        <div class="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <p class="text-2xl">🚽</p>
+            <p class="text-xs font-medium text-green-700">Sanitation</p>
+            <p class="text-lg font-bold text-green-600" x-text="issues.filter(i => i.type === 'sanitation').length"></p>
+        </div>
+        <div class="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+            <p class="text-2xl">🛣️</p>
+            <p class="text-xs font-medium text-purple-700">Roads</p>
+            <p class="text-lg font-bold text-purple-600" x-text="issues.filter(i => i.type === 'roads').length"></p>
+        </div>
+    </div>
+</div>

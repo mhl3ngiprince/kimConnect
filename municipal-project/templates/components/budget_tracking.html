@@ -1,0 +1,296 @@
+<!-- Budget Tracking & Transparency Component -->
+<div x-data="{
+    activeTab: 'overview',
+    selectedYear: new Date().getFullYear(),
+    
+    budgetData: {
+        total: 450000000,
+        allocated: 420000000,
+        spent: 285000000,
+        remaining: 135000000
+    },
+    
+    departments: [
+        { 
+            name: 'Water & Sanitation', 
+            budget: 150000000, 
+            spent: 98000000,
+            icon: 'droplet',
+            color: 'blue',
+            projects: [
+                { name: 'Galeshewe Water Upgrade', budget: 25000000, spent: 18000000, status: 'in_progress' },
+                { name: 'Roodepan Sewer Replacement', budget: 18000000, spent: 15000000, status: 'in_progress' },
+                { name: 'Bulk Water Meters', budget: 8000000, spent: 8000000, status: 'completed' }
+            ]
+        },
+        { 
+            name: 'Electricity', 
+            budget: 120000000, 
+            spent: 85000000,
+            icon: 'zap',
+            color: 'amber',
+            projects: [
+                { name: 'Solar Panel Installation', budget: 30000000, spent: 22000000, status: 'in_progress' },
+                { name: 'Grid Modernization', budget: 45000000, spent: 45000000, status: 'completed' }
+            ]
+        },
+        { 
+            name: 'Roads & Infrastructure', 
+            budget: 100000000, 
+            spent: 62000000,
+            icon: 'map',
+            color: 'gray',
+            projects: [
+                { name: 'Pothole Repairs Q1-Q4', budget: 15000000, spent: 12000000, status: 'in_progress' },
+                { name: 'Galeshewe Road Upgrade', budget: 50000000, spent: 30000000, status: 'in_progress' }
+            ]
+        },
+        { 
+            name: 'Waste Management', 
+            budget: 80000000, 
+            spent: 40000000,
+            icon: 'trash-2',
+            color: 'green',
+            projects: [
+                { name: 'Waste Collection Vehicles', budget: 20000000, spent: 15000000, status: 'completed' },
+                { name: 'Recycling Program', budget: 10000000, spent: 5000000, status: 'in_progress' }
+            ]
+        }
+    ],
+    
+    formatCurrency(amount) {
+        if (amount >= 1000000000) {
+            return 'R' + (amount / 1000000000).toFixed(1) + 'B';
+        } else if (amount >= 1000000) {
+            return 'R' + (amount / 1000000).toFixed(0) + 'M';
+        } else if (amount >= 1000) {
+            return 'R' + (amount / 1000).toFixed(0) + 'K';
+        }
+        return 'R' + amount;
+    },
+    
+    getPercentage(spent, total) {
+        return Math.round((spent / total) * 100);
+    },
+    
+    getStatusColor(status) {
+        return {
+            'completed': 'bg-green-100 text-green-700',
+            'in_progress': 'bg-blue-100 text-blue-700',
+            'pending': 'bg-gray-100 text-gray-700',
+            'delayed': 'bg-red-100 text-red-700'
+        }[status] || 'bg-gray-100 text-gray-700';
+    }
+}" class="space-y-6">
+
+    <!-- Budget Overview Card -->
+    <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl">
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <h3 class="text-slate-300 text-sm font-medium">Municipal Budget</h3>
+                <p class="text-4xl font-bold mt-1" x-text="formatCurrency(budgetData.total)"></p>
+                <p class="text-slate-400 text-sm mt-1">FY <span x-text="selectedYear"></span></p>
+            </div>
+            <div class="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                <i data-lucide="landmark" class="w-8 h-8"></i>
+            </div>
+        </div>
+        
+        <!-- Overall Progress -->
+        <div class="mb-4">
+            <div class="flex justify-between text-sm mb-2">
+                <span class="text-slate-300">Total Spent</span>
+                <span class="font-medium" x-text="formatCurrency(budgetData.spent) + ' / ' + formatCurrency(budgetData.total)"></span>
+            </div>
+            <div class="h-4 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500"
+                     :style="'width: ' + getPercentage(budgetData.spent, budgetData.total) + '%'"></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                <span x-text="getPercentage(budgetData.spent, budgetData.total) + '% spent'"></span>
+                <span x-text="formatCurrency(budgetData.remaining) + ' remaining'"></span>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-3 gap-4 mt-6">
+            <div class="text-center p-3 bg-white/10 rounded-xl">
+                <p class="text-2xl font-bold" x-text="getPercentage(budgetData.allocated, budgetData.total) + '%'"></p>
+                <p class="text-xs text-slate-300">Allocated</p>
+            </div>
+            <div class="text-center p-3 bg-white/10 rounded-xl">
+                <p class="text-2xl font-bold" x-text="getPercentage(budgetData.spent, budgetData.allocated) + '%'"></p>
+                <p class="text-xs text-slate-300">Utilized</p>
+            </div>
+            <div class="text-center p-3 bg-white/10 rounded-xl">
+                <p class="text-2xl font-bold" x-text="'R' + Math.round(budgetData.spent / 365).toLocaleString()"></p>
+                <p class="text-xs text-slate-300">Daily Avg</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-200 dark:border-gray-700">
+        <button @click="activeTab = 'overview'" 
+                class="flex-1 py-3 px-4 text-center font-medium transition-colors"
+                :class="activeTab === 'overview' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'">
+            📊 Overview
+        </button>
+        <button @click="activeTab = 'departments'" 
+                class="flex-1 py-3 px-4 text-center font-medium transition-colors"
+                :class="activeTab === 'departments' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'">
+            🏢 Departments
+        </button>
+        <button @click="activeTab = 'projects'" 
+                class="flex-1 py-3 px-4 text-center font-medium transition-colors"
+                :class="activeTab === 'projects' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'">
+            🚧 Projects
+        </button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div x-show="activeTab === 'overview'" class="space-y-6">
+        <!-- Spending by Category -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Spending by Category</h4>
+            <div class="space-y-4">
+                <template x-for="dept in departments" :key="dept.name">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                     :class="'bg-' + dept.color + '-100 dark:bg-' + dept.color + '-900/30'">
+                                    <i :data-lucide="dept.icon" class="w-4 h-4" :class="'text-' + dept.color + '-600'"></i>
+                                </div>
+                                <span class="font-medium text-gray-900 dark:text-white" x-text="dept.name"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-semibold text-gray-900 dark:text-white" x-text="formatCurrency(dept.spent)"></span>
+                                <span class="text-gray-500 text-sm" x-text="' / ' + formatCurrency(dept.budget)"></span>
+                            </div>
+                        </div>
+                        <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500"
+                                 :class="getPercentage(dept.spent, dept.budget) > 90 ? 'bg-red-500' : getPercentage(dept.spent, dept.budget) > 70 ? 'bg-amber-500' : 'bg-emerald-500'"
+                                 :style="'width: ' + getPercentage(dept.spent, dept.budget) + '%'"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        
+        <!-- Transparency Score -->
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl p-6 border border-emerald-100 dark:border-emerald-800">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-emerald-600"></i>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-emerald-900 dark:text-emerald-100">Transparency Score: 94%</h4>
+                    <p class="text-sm text-emerald-700 dark:text-emerald-300">This municipality is in the top 10% for budget transparency in South Africa.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Departments Tab -->
+    <div x-show="activeTab === 'departments'" class="space-y-4">
+        <template x-for="dept in departments" :key="dept.name">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                             :class="'bg-' + dept.color + '-100 dark:bg-' + dept.color + '-900/30'">
+                            <i :data-lucide="dept.icon" class="w-6 h-6" :class="'text-' + dept.color + '-600'"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white" x-text="dept.name"></h4>
+                            <p class="text-sm text-gray-500" x-text="dept.projects.length + ' active projects'"></p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="formatCurrency(dept.spent)"></p>
+                        <p class="text-sm text-gray-500" x-text="formatCurrency(dept.budget) + ' budget'"></p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4 text-sm">
+                    <div class="flex-1">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-gray-500">Budget Used</span>
+                            <span class="font-medium" x-text="getPercentage(dept.spent, dept.budget) + '%'"></span>
+                        </div>
+                        <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full" 
+                                 :class="getPercentage(dept.spent, dept.budget) > 90 ? 'bg-red-500' : 'bg-primary-500'"
+                                 :style="'width: ' + getPercentage(dept.spent, dept.budget) + '%'"></div>
+                        </div>
+                    </div>
+                    <button class="px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg">
+                        View Details →
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Projects Tab -->
+    <div x-show="activeTab === 'projects'" class="space-y-4">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="font-semibold text-gray-900 dark:text-white">All Projects</h4>
+            <select class="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm">
+                <option>All Status</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+                <option>Delayed</option>
+            </select>
+        </div>
+        
+        <template x-for="dept in departments" :key="dept.name">
+            <template x-for="project in dept.projects" :key="project.name">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h5 class="font-medium text-gray-900 dark:text-white" x-text="project.name"></h5>
+                                <span class="px-2 py-0.5 text-xs rounded-full capitalize" 
+                                      :class="getStatusColor(project.status)"
+                                      x-text="project.status.replace('_', ' ')"></span>
+                            </div>
+                            <p class="text-sm text-gray-500" x-text="dept.name"></p>
+                        </div>
+                        <div class="text-right ml-4">
+                            <p class="font-semibold text-gray-900 dark:text-white" x-text="formatCurrency(project.spent)"></p>
+                            <p class="text-xs text-gray-500" x-text="formatCurrency(project.budget) + ' budget'"></p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary-500 rounded-full" 
+                                 :style="'width: ' + getPercentage(project.spent, project.budget) + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </template>
+    </div>
+
+    <!-- Download Reports -->
+    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+        <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Download Budget Reports</h4>
+        <div class="flex flex-wrap gap-2">
+            <button class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                Annual Report PDF
+            </button>
+            <button class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+                <i data-lucide="table" class="w-4 h-4"></i>
+                Excel Spreadsheet
+            </button>
+            <button class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+                <i data-lucide="bar-chart" class="w-4 h-4"></i>
+                Charts & Graphs
+            </button>
+        </div>
+    </div>
+</div>

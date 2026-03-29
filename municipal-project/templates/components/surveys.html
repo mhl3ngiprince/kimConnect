@@ -1,0 +1,298 @@
+<!-- Community Surveys Component -->
+<div x-data="{
+    activeSurvey: null,
+    showSurveyModal: false,
+    surveyCompleted: false,
+    currentStep: 0,
+    answers: {},
+    
+    surveys: [
+        {
+            id: 1,
+            title: 'Municipal Service Satisfaction Survey',
+            description: 'Help us improve our services by sharing your experience',
+            questions: [
+                {
+                    id: 'q1',
+                    text: 'How satisfied are you with the overall municipal services?',
+                    type: 'rating',
+                    options: [1, 2, 3, 4, 5],
+                    labels: ['Very Dissatisfied', 'Dissatisfied', 'Neutral', 'Satisfied', 'Very Satisfied']
+                },
+                {
+                    id: 'q2',
+                    text: 'How quickly were your reported issues addressed?',
+                    type: 'choice',
+                    options: ['Within 24 hours', '2-3 days', 'A week', 'More than a week', 'Not resolved yet']
+                },
+                {
+                    id: 'q3',
+                    text: 'Would you recommend KimConnect to others?',
+                    type: 'yesno'
+                },
+                {
+                    id: 'q4',
+                    text: 'What improvements would you like to see?',
+                    type: 'textarea',
+                    placeholder: 'Share your suggestions...'
+                }
+            ],
+            rewards: 50,
+            responses: 234
+        },
+        {
+            id: 2,
+            title: 'Water & Sanitation Services',
+            description: 'Share your experience with water and sanitation services',
+            questions: [
+                {
+                    id: 'q1',
+                    text: 'How would you rate your water quality?',
+                    type: 'rating',
+                    options: [1, 2, 3, 4, 5],
+                    labels: ['Very Poor', 'Poor', 'Average', 'Good', 'Excellent']
+                },
+                {
+                    id: 'q2',
+                    text: 'How often do you experience water interruptions?',
+                    type: 'choice',
+                    options: ['Never', 'Rarely', 'Sometimes', 'Often', 'Always']
+                }
+            ],
+            rewards: 30,
+            responses: 156
+        },
+        {
+            id: 3,
+            title: 'Road Infrastructure Feedback',
+            description: 'Help us understand road conditions in your area',
+            questions: [
+                {
+                    id: 'q1',
+                    text: 'How would you rate the road conditions in your area?',
+                    type: 'rating',
+                    options: [1, 2, 3, 4, 5],
+                    labels: ['Very Poor', 'Poor', 'Average', 'Good', 'Excellent']
+                },
+                {
+                    id: 'q2',
+                    text: 'Have you noticed improvements in road maintenance?',
+                    type: 'yesno'
+                }
+            ],
+            rewards: 25,
+            responses: 89
+        }
+    ],
+    
+    startSurvey(survey) {
+        this.activeSurvey = survey;
+        this.showSurveyModal = true;
+        this.currentStep = 0;
+        this.answers = {};
+    },
+    
+    nextQuestion() {
+        if (this.currentStep < this.activeSurvey.questions.length - 1) {
+            this.currentStep++;
+        } else {
+            this.submitSurvey();
+        }
+    },
+    
+    prevQuestion() {
+        if (this.currentStep > 0) {
+            this.currentStep--;
+        }
+    },
+    
+    submitSurvey() {
+        // API call to submit survey
+        this.surveyCompleted = true;
+        this.showSurveyModal = false;
+        
+        // Award points
+        this.$dispatch('award-points', { amount: this.activeSurvey.rewards });
+    },
+    
+    getCurrentQuestion() {
+        if (!this.activeSurvey) return null;
+        return this.activeSurvey.questions[this.currentStep];
+    }
+}" class="space-y-6">
+
+    <!-- Survey List -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="font-semibold text-gray-900 dark:text-white">📋 Community Surveys</h3>
+            <span class="text-sm text-gray-500" x-text="surveys.length + ' available'"></span>
+        </div>
+
+        <template x-for="survey in surveys" :key="survey.id">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-900 dark:text-white" x-text="survey.title"></h4>
+                        <p class="text-sm text-gray-500 mt-1" x-text="survey.description"></p>
+                    </div>
+                    <div class="ml-4 text-right">
+                        <div class="flex items-center gap-1 text-primary-600">
+                            <i data-lucide="star" class="w-4 h-4"></i>
+                            <span class="font-bold" x-text="'+' + survey.rewards"></span>
+                        </div>
+                        <p class="text-xs text-gray-500">points</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-4 text-sm text-gray-500">
+                        <span x-text="survey.questions.length + ' questions'"></span>
+                        <span x-text="survey.responses + ' responses'"></span>
+                    </div>
+                    <button @click="startSurvey(survey)" 
+                            class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors">
+                        Take Survey
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Survey Modal -->
+    <div x-show="showSurveyModal" x-cloak class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
+             @click.away="showSurveyModal = false">
+            
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white" x-text="activeSurvey?.title"></h3>
+                    <button @click="showSurveyModal = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+                    </button>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="flex items-center gap-3">
+                    <div class="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary-500 transition-all duration-300" 
+                             :style="'width: ' + ((currentStep + 1) / (activeSurvey?.questions.length || 1) * 100) + '%'"></div>
+                    </div>
+                    <span class="text-sm text-gray-500" 
+                          x-text="(currentStep + 1) + '/' + (activeSurvey?.questions.length || 0)"></span>
+                </div>
+            </div>
+            
+            <!-- Question Content -->
+            <div class="flex-1 overflow-y-auto p-6" x-show="!surveyCompleted">
+                <template x-if="getCurrentQuestion()">
+                    <div>
+                        <p class="text-lg font-medium text-gray-900 dark:text-white mb-6" 
+                           x-text="getCurrentQuestion().text"></p>
+                        
+                        <!-- Rating Question -->
+                        <template x-if="getCurrentQuestion().type === 'rating'">
+                            <div class="flex justify-center gap-3">
+                                <template x-for="(rating, index) in getCurrentQuestion().options" :key="rating">
+                                    <button @click="answers[getCurrentQuestion().id] = rating"
+                                            class="w-14 h-14 rounded-xl border-2 transition-all flex flex-col items-center justify-center"
+                                            :class="answers[getCurrentQuestion().id] === rating 
+                                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' 
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-primary-300'">
+                                        <span class="text-2xl font-bold" :class="answers[getCurrentQuestion().id] === rating ? 'text-primary-600' : 'text-gray-600 dark:text-gray-400'" x-text="rating"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <!-- Choice Question -->
+                        <template x-if="getCurrentQuestion().type === 'choice'">
+                            <div class="space-y-3">
+                                <template x-for="option in getCurrentQuestion().options" :key="option">
+                                    <label class="flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                           :class="{'border-primary-500 bg-primary-50 dark:bg-primary-900/30': answers[getCurrentQuestion().id] === option}">
+                                        <input type="radio" 
+                                               :name="'question-' + getCurrentQuestion().id"
+                                               :value="option"
+                                               x-model="answers[getCurrentQuestion().id]"
+                                               class="w-5 h-5 text-primary-600">
+                                        <span class="text-gray-700 dark:text-gray-300" x-text="option"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <!-- Yes/No Question -->
+                        <template x-if="getCurrentQuestion().type === 'yesno'">
+                            <div class="flex gap-4">
+                                <button @click="answers[getCurrentQuestion().id] = true"
+                                        class="flex-1 py-4 border-2 rounded-xl font-medium transition-all"
+                                        :class="answers[getCurrentQuestion().id] === true 
+                                            ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30' 
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300'">
+                                    ✅ Yes
+                                </button>
+                                <button @click="answers[getCurrentQuestion().id] = false"
+                                        class="flex-1 py-4 border-2 rounded-xl font-medium transition-all"
+                                        :class="answers[getCurrentQuestion().id] === false 
+                                            ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/30' 
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-red-300'">
+                                    ❌ No
+                                </button>
+                            </div>
+                        </template>
+                        
+                        <!-- Textarea Question -->
+                        <template x-if="getCurrentQuestion().type === 'textarea'">
+                            <textarea x-model="answers[getCurrentQuestion().id]"
+                                      :placeholder="getCurrentQuestion().placeholder"
+                                      rows="4"
+                                      class="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 resize-none"></textarea>
+                        </template>
+                    </div>
+                </template>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-between">
+                <button @click="prevQuestion()" 
+                        x-show="currentStep > 0"
+                        class="px-6 py-2 border border-gray-200 dark:border-gray-700 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Previous
+                </button>
+                <div x-show="currentStep === 0"></div>
+                <button @click="nextQuestion()" 
+                        :disabled="!answers[getCurrentQuestion()?.id] && getCurrentQuestion()?.type !== 'textarea'"
+                        class="px-6 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-text="currentStep < (activeSurvey?.questions.length || 1) - 1 ? 'Next' : 'Submit'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div x-show="surveyCompleted" x-cloak class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center"
+             @click.away="surveyCompleted = false">
+            <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="trophy" class="w-10 h-10 text-emerald-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Survey Completed!</h3>
+            <p class="text-gray-500 mt-2">Thank you for your feedback. You've earned <strong class="text-primary-600">+<span x-text="activeSurvey?.rewards"></span> points</strong>!</p>
+            <div class="mt-6 flex gap-3">
+                <button @click="surveyCompleted = false; surveyCompleted = false" 
+                        class="flex-1 py-2 border border-gray-200 dark:border-gray-700 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Close
+                </button>
+                <button @click="surveyCompleted = false; activeTab = 'leaderboard'" 
+                        class="flex-1 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700">
+                    View Rewards
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    [x-cloak] { display: none !important; }
+</style>

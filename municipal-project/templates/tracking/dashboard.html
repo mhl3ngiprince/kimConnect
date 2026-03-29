@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Staff Dashboard - KimConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+            <span class="text-purple-600">🏢</span> Sol Plaatje Staff Dashboard
+        </h1>
+        <p class="text-gray-500 mt-1">Real-time overview of community issues in Kimberley</p>
+    </div>
+
+    <!-- Stats Cards - Large touch targets for accessibility -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="file-text" class="w-6 h-6 text-purple-600"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-400">Total</span>
+            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ stats.total }}</p>
+            <p class="text-sm text-gray-500 mt-1">Total Issues</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+                </div>
+                <span class="text-xs font-medium text-yellow-600">Needs attention</span>
+            </div>
+            <p class="text-3xl font-bold text-yellow-600">{{ stats.pending }}</p>
+            <p class="text-sm text-gray-500 mt-1">Pending</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="loader" class="w-6 h-6 text-blue-600"></i>
+                </div>
+                <span class="text-xs font-medium text-blue-600">In progress</span>
+            </div>
+            <p class="text-3xl font-bold text-blue-600">{{ stats.in_progress }}</p>
+            <p class="text-sm text-gray-500 mt-1">In Progress</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                </div>
+                <span class="text-xs font-medium text-green-600">Completed</span>
+            </div>
+            <p class="text-3xl font-bold text-green-600">{{ stats.resolved }}</p>
+            <p class="text-sm text-gray-500 mt-1">Resolved</p>
+        </div>
+    </div>
+
+    <!-- Critical Issues Alert - High visibility for urgent items -->
+    {% if critical_issues %}
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-red-900 mb-2">
+                    ⚠️ {{ critical_issues|length }} Urgent Issues Require Immediate Attention
+                </h3>
+                <div class="space-y-2">
+                    {% for issue in critical_issues|slice:":5" %}
+                    <a href="{% url 'tracking:issue_detail' issue.id %}" 
+                       class="flex items-center justify-between p-3 bg-white rounded-xl hover:bg-red-100 transition-colors"
+                       style="min-height: 56px;">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🚨</span>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ issue.title }}</p>
+                                <p class="text-sm text-gray-500">{{ issue.location }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-block px-3 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full">
+                                {{ issue.priority|title }}
+                            </span>
+                            <p class="text-xs text-gray-400 mt-1">{{ issue.created_at|timesince }} ago</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% if critical_issues|length > 5 %}
+                <a href="?priority=urgent" class="mt-3 text-red-700 font-medium text-sm hover:underline">
+                    View all {{ critical_issues|length }} urgent issues →
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- SLA Warnings -->
+    {% if sla_warnings %}
+    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-8">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i data-lucide="timer" class="w-6 h-6 text-orange-600"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-orange-900 mb-2">
+                    🕐 {{ sla_warnings|length }} Issues At Risk of Missing SLA
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for issue in sla_warnings %}
+                    <a href="{% url 'tracking:issue_detail' issue.id %}" 
+                       class="px-3 py-2 bg-white rounded-lg text-sm hover:bg-orange-100 transition-colors"
+                       title="Due: {{ issue.sla_deadline|date:'M d, H:i' }}">
+                        <span class="font-medium">{{ issue.tracking_code }}</span>
+                        <span class="text-gray-500 ml-1">- {{ issue.priority|title }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Main Content - Issue List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <!-- Filter Bar -->
+                <div class="p-4 border-b border-gray-100 bg-gray-50">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h2 class="text-lg font-semibold text-gray-900 mr-auto">Recent Issues</h2>
+                        
+                        <!-- Status Filter -->
+                        <select onchange="filterIssues('status', this.value)" 
+                                class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                style="min-height: 44px;"
+                                aria-label="Filter by status">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+
+                        <!-- Priority Filter -->
+                        <select onchange="filterIssues('priority', this.value)" 
+                                class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                style="min-height: 44px;"
+                                aria-label="Filter by priority">
+                            <option value="">All Priorities</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+
+                        <!-- Type Filter -->
+                        <select onchange="filterIssues('type', this.value)" 
+                                class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                style="min-height: 44px;"
+                                aria-label="Filter by issue type">
+                            <option value="">All Types</option>
+                            <option value="water">💧 Water</option>
+                            <option value="electricity">⚡ Electricity</option>
+                            <option value="pothole">🕳️ Pothole</option>
+                            <option value="waste">🗑️ Waste</option>
+                            <option value="streetlight">💡 Street Light</option>
+                            <option value="other">📍 Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Issue List -->
+                <div class="divide-y divide-gray-100">
+                    {% if issues %}
+                        {% for issue in issues %}
+                        <a href="{% url 'tracking:issue_detail' issue.id %}" 
+                           class="block p-4 hover:bg-purple-50 transition-colors"
+                           style="min-height: 72px;">
+                            <div class="flex items-start gap-4">
+                                <!-- Type Icon -->
+                                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <span class="text-2xl">
+                                        {% if issue.issue_type == 'water' %}💧
+                                        {% elif issue.issue_type == 'electricity' %}⚡
+                                        {% elif issue.issue_type == 'pothole' %}🕳️
+                                        {% elif issue.issue_type == 'waste' %}🗑️
+                                        {% elif issue.issue_type == 'streetlight' %}💡
+                                        {% else %}📍{% endif %}
+                                    </span>
+                                </div>
+
+                                <!-- Issue Info -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p class="font-medium text-gray-900 truncate">{{ issue.title }}</p>
+                                            <p class="text-sm text-gray-500 mt-0.5">
+                                                <span class="font-mono bg-gray-100 px-1 rounded">{{ issue.tracking_code }}</span>
+                                                • {{ issue.location|truncatechars:30 }}
+                                            </p>
+                                        </div>
+                                        <span class="px-3 py-1 text-sm font-medium rounded-full flex-shrink-0
+                                            {% if issue.status == 'pending' %}bg-yellow-100 text-yellow-700
+                                            {% elif issue.status == 'in_progress' %}bg-blue-100 text-blue-700
+                                            {% elif issue.status == 'resolved' %}bg-green-100 text-green-700
+                                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                            {{ issue.get_status_display }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Tags -->
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span class="px-2 py-0.5 text-xs font-medium rounded
+                                            {% if issue.priority == 'urgent' %}bg-red-100 text-red-700
+                                            {% elif issue.priority == 'high' %}bg-orange-100 text-orange-700
+                                            {% elif issue.priority == 'medium' %}bg-yellow-100 text-yellow-700
+                                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                            {{ issue.priority|title }}
+                                        </span>
+                                        <span class="text-xs text-gray-400">
+                                            {{ issue.created_at|date:"M d, Y" }} • {{ issue.department|default:"Unassigned" }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Arrow -->
+                                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 flex-shrink-0 mt-4"></i>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Empty State with CTA - FEEDBACK principle -->
+                        <div class="p-12 text-center">
+                            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No issues found</h3>
+                            <p class="text-gray-500 mb-6">Try adjusting your filters or check back later</p>
+                            <a href="{% url 'reporting:report_issue' %}" 
+                               class="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+                               style="min-height: 48px;">
+                                <i data-lucide="plus" class="w-5 h-5"></i>
+                                Test Report Submission
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Pagination -->
+                {% if issues.has_other_pages %}
+                <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                    <p class="text-sm text-gray-500">
+                        Showing {{ issues.start_index }} to {{ issues.end_index }} of {{ issues.paginator.count }} issues
+                    </p>
+                    <div class="flex gap-2">
+                        {% if issues.has_previous %}
+                        <a href="?page={{ issues.previous_page_number }}" 
+                           class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-100 transition-colors"
+                           style="min-height: 44px; min-width: 44px;">
+                            ← Previous
+                        </a>
+                        {% endif %}
+                        {% if issues.has_next %}
+                        <a href="?page={{ issues.next_page_number }}" 
+                           class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-100 transition-colors"
+                           style="min-height: 44px; min-width: 44px;">
+                            Next →
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar - Recent Activity -->
+        <div class="lg:col-span-1">
+            <!-- Quick Stats Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 text-purple-600"></i>
+                    Issues by Type
+                </h3>
+                <canvas id="typeChart" height="200" 
+                        data-labels="{{ type_labels_json }}" 
+                        data-values="{{ type_data_json }}"></canvas>
+            </div>
+
+            <!-- Recent Activity Feed -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-5 h-5 text-purple-600"></i>
+                    Recent Updates
+                </h3>
+                
+                {% if recent_updates %}
+                <div class="space-y-4">
+                    {% for update in recent_updates %}
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="message-circle" class="w-4 h-4 text-purple-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-900">
+                                <span class="font-medium">{{ update.issue.tracking_code }}</span>
+                                updated
+                            </p>
+                            <p class="text-xs text-gray-500 truncate">{{ update.message }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ update.created_at|timesince }} ago</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 text-center py-4">No recent updates</p>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl p-6 mt-6 text-white">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                    Quick Actions
+                </h3>
+                <div class="space-y-3">
+                    <a href="{% url 'admin:index' %}" 
+                       class="flex items-center gap-3 p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+                       style="min-height: 48px;">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                        <span>Admin Panel</span>
+                    </a>
+                    <a href="{% url 'reporting:issue_list' %}" 
+                       class="flex items-center gap-3 p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+                       style="min-height: 48px;">
+                        <i data-lucide="globe" class="w-5 h-5"></i>
+                        <span>View Public Page</span>
+                    </a>
+                    <button onclick="exportReport()" 
+                            class="w-full flex items-center gap-3 p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors text-left"
+                            style="min-height: 48px;">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                        <span>Export Report</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Type Distribution Chart
+    const typeCtx = document.getElementById('typeChart');
+    if (typeCtx) {
+        const chartCanvas = typeCtx.getContext('2d');
+        const labelsAttr = typeCtx.getAttribute('data-labels');
+        const valuesAttr = typeCtx.getAttribute('data-values');
+        const typeLabels = labelsAttr ? JSON.parse(labelsAttr) : [];
+        const typeData = valuesAttr ? JSON.parse(valuesAttr) : [];
+        
+        new Chart(chartCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    data: typeData,
+                    backgroundColor: [
+                        '#3B82F6',
+                        '#F59E0B',
+                        '#6B7280',
+                        '#10B981',
+                        '#8B5CF6',
+                        '#EC4899'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Filter function with URL params
+    function filterIssues(filterType, value) {
+        const url = new URL(window.location);
+        if (value) {
+            url.searchParams.set(filterType, value);
+        } else {
+            url.searchParams.delete(filterType);
+        }
+        url.searchParams.delete('page'); // Reset pagination
+        window.location = url;
+    }
+
+    // Export report function
+    function exportReport() {
+        alert('Export functionality coming soon!\n\nThis will generate a CSV/PDF report of all issues.');
+    }
+
+    // Auto-refresh indicator (simulated real-time)
+    let lastUpdate = new Date();
+    function updateTimestamp() {
+        const now = new Date();
+        const diff = Math.floor((now - lastUpdate) / 1000);
+        console.log('Dashboard last updated: ' + diff + ' seconds ago');
+    }
+    setInterval(updateTimestamp, 30000);
+</script>
+{% endblock %}

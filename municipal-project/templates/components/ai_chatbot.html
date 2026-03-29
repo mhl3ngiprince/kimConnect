@@ -1,0 +1,216 @@
+<!-- AI Chatbot Widget -->
+<div id="chatbot-widget" class="fixed bottom-4 right-4 z-50">
+    <!-- Chat Button -->
+    <button onclick="toggleChat()" 
+            class="w-14 h-14 bg-purple-600 text-white rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all flex items-center justify-center group"
+            aria-label="Open chat assistant">
+        <span class="text-2xl group-hover:scale-110 transition-transform">🤖</span>
+        <span class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+    </button>
+
+    <!-- Chat Window -->
+    <div id="chat-window" class="hidden absolute bottom-16 right-0 w-96 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <span class="text-xl">🤖</span>
+                </div>
+                <div>
+                    <h3 class="font-semibold">KimConnect Assistant</h3>
+                    <p class="text-xs text-purple-200">Powered by AI</p>
+                </div>
+                <button onclick="toggleChat()" class="ml-auto text-white/80 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-messages" class="h-80 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <!-- Welcome Message -->
+            <div class="flex gap-3">
+                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm">🤖</span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[80%]">
+                    <p class="text-sm text-gray-700">Hello! I'm your KimConnect assistant. I can help you:</p>
+                    <ul class="text-sm text-gray-600 mt-2 space-y-1">
+                        <li>• Report an issue</li>
+                        <li>• Track your report</li>
+                        <li>• Answer FAQs</li>
+                        <li>• Connect to human support</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="px-4 py-2 bg-white border-t border-gray-100">
+            <div class="flex gap-2 overflow-x-auto pb-2">
+                <button onclick="sendQuickMessage('How do I report a water leak?')" class="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs whitespace-nowrap hover:bg-purple-100">
+                    Report water leak 💧
+                </button>
+                <button onclick="sendQuickMessage('Track my issue SP-ABC123')" class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs whitespace-nowrap hover:bg-blue-100">
+                    Track issue 🔍
+                </button>
+                <button onclick="sendQuickMessage('What are your operating hours?')" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs whitespace-nowrap hover:bg-green-100">
+                    Hours ⏰
+                </button>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="p-4 bg-white border-t border-gray-200">
+            <div class="flex gap-2">
+                <button onclick="startVoiceInput()" class="p-2 text-gray-400 hover:text-purple-600 transition-colors" aria-label="Voice input">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                    </svg>
+                </button>
+                <input type="text" id="chat-input" 
+                       class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                       placeholder="Type your message..."
+                       onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()" class="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Chatbot Logic
+    let chatHistory = [];
+    
+    function toggleChat() {
+        const chatWindow = document.getElementById('chat-window');
+        chatWindow.classList.toggle('hidden');
+        if (!chatWindow.classList.contains('hidden')) {
+            document.getElementById('chat-input').focus();
+        }
+    }
+
+    function sendQuickMessage(text) {
+        document.getElementById('chat-input').value = text;
+        sendMessage();
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        // Add user message
+        addMessage(message, 'user');
+        input.value = '';
+        
+        // Get AI response
+        getAIResponse(message);
+    }
+
+    function addMessage(text, sender) {
+        const messagesDiv = document.getElementById('chat-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'flex gap-3 ' + (sender === 'user' ? 'flex-row-reverse' : '');
+        
+        const icon = sender === 'user' ? '👤' : '🤖';
+        const bgColor = sender === 'user' ? 'bg-purple-600 text-white' : 'bg-white';
+        const rounded = sender === 'user' ? 'rounded-tr-none' : 'rounded-tl-none';
+        
+        messageDiv.innerHTML = `
+            <div class="w-8 h-8 ${sender === 'user' ? 'bg-purple-700' : 'bg-purple-100'} rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-sm">${icon}</span>
+            </div>
+            <div class="${bgColor} p-3 rounded-2xl ${rounded} shadow-sm max-w-[80%]">
+                <p class="text-sm">${text}</p>
+            </div>
+        `;
+        
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function getAIResponse(message) {
+        // Simple rule-based responses (in production, connect to OpenAI/ChatGPT API)
+        const lowerMsg = message.toLowerCase();
+        let response = '';
+        
+        if (lowerMsg.includes('water') || lowerMsg.includes('leak')) {
+            response = "To report a water leak: 1) Click 'Report Issue' 2) Select 'Water' category 3) Take a photo 4) Add location. We'll send a crew within 4 hours for urgent leaks! 💧";
+        } else if (lowerMsg.includes('track') || lowerMsg.includes('status')) {
+            response = "You can track your issue by: 1) Using the search bar with your tracking code (SP-XXXXXX) 2) Going to 'Track Your Issue' page 3) Checking your email for updates 📧";
+        } else if (lowerMsg.includes('hour') || lowerMsg.includes('time')) {
+            response = "KimConnect accepts reports 24/7! Our response times: Urgent (4 hours), High (24 hours), Medium (3 days), Low (1 week). Emergency? Call 053 830 6000 ⏰";
+        } else if (lowerMsg.includes('pothole') || lowerMsg.includes('road')) {
+            response = "Report potholes easily! Click 'Report Issue', select 'Pothole', take a photo, and we'll route it to our Roads Department. Average fix time: 3-5 days 🕳️";
+        } else if (lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
+            response = "Hello! 👋 I'm here to help you with KimConnect. What would you like to do today?";
+        } else if (lowerMsg.includes('help') || lowerMsg.includes('support')) {
+            response = "Need human help? You can: 1) Call Sol Plaatje at 053 830 6000 2) Email info@solplaatje.org.za 3) Visit our offices at 13 Hull Street, Kimberley 📞";
+        } else {
+            response = "I understand you're asking about: \"" + message + "\". For specific help, try asking about reporting issues, tracking, or contact our support team at 053 830 6000. Is there something specific about KimConnect I can help with?";
+        }
+        
+        // Simulate typing delay
+        setTimeout(() => {
+            addMessage(response, 'bot');
+        }, 500);
+    }
+
+    // Voice Input (Web Speech API)
+    function startVoiceInput() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.lang = 'en-ZA'; // South African English
+            recognition.start();
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('chat-input').value = transcript;
+                sendMessage();
+            };
+            
+            recognition.onerror = function(event) {
+                alert('Voice recognition error. Please try again or type your message.');
+            };
+        } else {
+            alert('Voice input is not supported in your browser. Please type your message.');
+        }
+    }
+
+    // Add typing indicator
+    function showTyping() {
+        const messagesDiv = document.getElementById('chat-messages');
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing-indicator';
+        typingDiv.className = 'flex gap-3';
+        typingDiv.innerHTML = `
+            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <span class="text-sm">🤖</span>
+            </div>
+            <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm">
+                <div class="flex gap-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+            </div>
+        `;
+        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function hideTyping() {
+        const typingDiv = document.getElementById('typing-indicator');
+        if (typingDiv) typingDiv.remove();
+    }
+</script>

@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Issues - KimConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+            <span class="text-purple-600">📋</span> Community Issues in Kimberley
+        </h1>
+        <p class="text-gray-500 mt-2">See what's happening in your neighbourhood</p>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="flex flex-wrap items-center justify-center gap-6 text-center">
+            <div>
+                <p class="text-2xl font-bold text-purple-600">{{ stats.total }}</p>
+                <p class="text-xs text-gray-500">Total Reported</p>
+            </div>
+            <div class="w-px h-8 bg-gray-200"></div>
+            <div>
+                <p class="text-2xl font-bold text-yellow-600">{{ stats.pending }}</p>
+                <p class="text-xs text-gray-500">Pending</p>
+            </div>
+            <div class="w-px h-8 bg-gray-200"></div>
+            <div>
+                <p class="text-2xl font-bold text-blue-600">{{ stats.in_progress }}</p>
+                <p class="text-xs text-gray-500">In Progress</p>
+            </div>
+            <div class="w-px h-8 bg-gray-200"></div>
+            <div>
+                <p class="text-2xl font-bold text-green-600">{{ stats.resolved }}</p>
+                <p class="text-xs text-gray-500">Resolved</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-3">
+            <span class="text-sm font-medium text-gray-700">Filter:</span>
+            
+            <select onchange="window.location.href='?status=' + this.value + '&type=' + document.querySelector('[aria-label=\'Filter by type\']').value" 
+                    class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    style="min-height: 44px;"
+                    aria-label="Filter by status">
+                <option value="">All Status</option>
+                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+            </select>
+
+            <select onchange="window.location.href='?type=' + this.value + '&status=' + document.querySelector('[aria-label=\'Filter by status\']').value" 
+                    class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    style="min-height: 44px;"
+                    aria-label="Filter by type">
+                <option value="">All Types</option>
+                <option value="water" {% if request.GET.type == 'water' %}selected{% endif %}>💧 Water</option>
+                <option value="electricity" {% if request.GET.type == 'electricity' %}selected{% endif %}>⚡ Electricity</option>
+                <option value="pothole" {% if request.GET.type == 'pothole' %}selected{% endif %}>🕳️ Pothole</option>
+                <option value="waste" {% if request.GET.type == 'waste' %}selected{% endif %}>🗑️ Waste</option>
+                <option value="streetlight" {% if request.GET.type == 'streetlight' %}selected{% endif %}>💡 Street Light</option>
+            </select>
+
+            {% if request.GET.status or request.GET.type %}
+            <a href="{% url 'reporting:issue_list' %}" 
+               class="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+               style="min-height: 44px; display: flex; align-items: center;">
+                Clear Filters
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Issue List -->
+    <div class="space-y-4">
+        {% if issues %}
+            {% for issue in issues %}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-start gap-4">
+                    <!-- Type Icon -->
+                    <div class="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <span class="text-3xl">
+                            {% if issue.issue_type == 'water' %}💧
+                            {% elif issue.issue_type == 'electricity' %}⚡
+                            {% elif issue.issue_type == 'pothole' %}🕳️
+                            {% elif issue.issue_type == 'waste' %}🗑️
+                            {% elif issue.issue_type == 'streetlight' %}💡
+                            {% else %}📍{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Issue Details -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">
+                                    {{ issue.title }}
+                                </h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <span class="font-mono bg-gray-100 px-2 py-0.5 rounded">{{ issue.tracking_code }}</span>
+                                    • Reported {{ issue.created_at|timesince }} ago
+                                </p>
+                            </div>
+                            <span class="px-4 py-1.5 text-sm font-medium rounded-full flex-shrink-0
+                                {% if issue.status == 'pending' %}bg-yellow-100 text-yellow-700
+                                {% elif issue.status == 'in_progress' %}bg-blue-100 text-blue-700
+                                {% elif issue.status == 'resolved' %}bg-green-100 text-green-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ issue.get_status_display }}
+                            </span>
+                        </div>
+
+                        <p class="text-gray-600 mt-3 line-clamp-2">{{ issue.description }}</p>
+
+                        <!-- Meta Info -->
+                        <div class="flex flex-wrap items-center gap-4 mt-4">
+                            <span class="flex items-center gap-1 text-sm text-gray-500">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                {{ issue.location|truncatechars:40 }}
+                            </span>
+                            <span class="flex items-center gap-1 text-sm text-gray-500">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                                {% if issue.is_anonymous %}Anonymous{% else %}{{ issue.reporter_name }}{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Priority Badge & Action -->
+                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                            <span class="px-3 py-1 text-xs font-medium rounded
+                                {% if issue.priority == 'urgent' %}bg-red-100 text-red-700
+                                {% elif issue.priority == 'high' %}bg-orange-100 text-orange-700
+                                {% elif issue.priority == 'medium' %}bg-yellow-100 text-yellow-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ issue.priority|title }} Priority
+                            </span>
+                            <a href="{% url 'tracking:issue_detail' issue.id %}" 
+                               class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
+                               style="min-height: 44px;">
+                                View Details
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if issues.has_other_pages %}
+            <div class="flex justify-center gap-2 mt-8">
+                {% if issues.has_previous %}
+                <a href="?page={{ issues.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" 
+                   class="px-5 py-2 border-2 border-gray-200 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+                   style="min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center;">
+                    ← Previous
+                </a>
+                {% endif %}
+
+                <span class="px-4 py-2 text-gray-500">
+                    Page {{ issues.number }} of {{ issues.paginator.num_pages }}
+                </span>
+
+                {% if issues.has_next %}
+                <a href="?page={{ issues.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" 
+                   class="px-5 py-2 border-2 border-gray-200 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+                   style="min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center;">
+                    Next →
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State with CTA - FEEDBACK & AFFORDANCE principles -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                <div class="w-20 h-20 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <span class="text-4xl">🏘️</span>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">No issues reported yet</h3>
+                <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                    Be the first to report a community issue in Kimberley. Your report helps improve our neighbourhood!
+                </p>
+                <a href="{% url 'reporting:report_issue' %}" 
+                   class="inline-flex items-center gap-3 px-8 py-4 bg-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
+                   style="min-height: 56px;">
+                    <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                    Report an Issue
+                </a>
+                <p class="mt-4 text-sm text-gray-400">
+                    Takes less than 2 minutes • Get a tracking code instantly
+                </p>
+            </div>
+
+            <!-- How It Works -->
+            <div class="mt-8 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6 text-center">How KimConnect Works</h3>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">1</div>
+                        <h4 class="font-medium text-gray-900 mb-2">Report</h4>
+                        <p class="text-sm text-gray-600">Submit your issue with photo and location in under 2 minutes</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">2</div>
+                        <h4 class="font-medium text-gray-900 mb-2">Track</h4>
+                        <p class="text-sm text-gray-600">Get a tracking code (SP-XXXXXX) and real-time updates</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">3</div>
+                        <h4 class="font-medium text-gray-900 mb-2">Resolved</h4>
+                        <p class="text-sm text-gray-600">Receive notifications when Sol Plaatje addresses your issue</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %}
