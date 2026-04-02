@@ -1,0 +1,1 @@
+import os, sys, django; sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'municipal-project')); os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'municipal_service.settings'); django.setup(); from municipal_service.wsgi import application; app = application

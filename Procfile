@@ -1,0 +1,1 @@
+web: gunicorn --chdir municipal-project municipal_service.wsgi
