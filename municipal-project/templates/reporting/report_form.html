@@ -13,6 +13,12 @@
         <p class="text-gray-500">Help improve Kimberley - complete this form in under 2 minutes</p>
     </div>
 
+    {% if form.non_field_errors %}
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6" role="alert">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 inline-block mr-2"></i>
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
     {% if form.errors %}
     <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6" role="alert">
         <div class="flex items-start gap-3">
@@ -22,7 +28,7 @@
                 <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
                     {% for field, errors in form.errors.items %}
                         {% for error in errors %}
-                        <li>{{ error }}</li>
+                        <li>{{ field.label }}: {{ error }}</li>
                         {% endfor %}
                     {% endfor %}
                 </ul>
@@ -30,9 +36,18 @@
         </div>
     </div>
     {% endif %}
+    {% for hidden in form.hidden_fields %}
+    {{ hidden }}
+    {% endfor %}
+
 
     <form method="POST" enctype="multipart/form-data" class="space-y-6" id="report-form" novalidate>
         {% csrf_token %}
+        {{ form.use_current_location }}
+        {{ form.receive_updates }}
+        {{ form.share_location }}
+        {{ form.agree_terms }}
+
 
         <!-- Step Indicator - Progressive Disclosure -->
         <div class="bg-purple-50 rounded-xl p-4 mb-6">

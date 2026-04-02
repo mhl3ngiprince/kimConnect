@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+*.pot
+*.pyc
+
+# Static files
+/staticfiles/
+/static/**
+
+# Media files
+/media/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# Secrets
+*.pem
+*.key
+secrets.json
+
+# Build
+dist/
+build/
+*.egg-info/

@@ -10,9 +10,14 @@ from .models import StatusUpdate, IssueAssignment, SLATracking
 from reporting.models import Issue
 
 
+from django.contrib.auth.decorators import login_required
+
+@login_required(login_url='/login/')
 @staff_member_required
 def dashboard(request):
     """Staff dashboard with real-time statistics and overview"""
+    from .models import StaffMember
+
     
     # Get all issues for statistics
     issues = Issue.objects.all().order_by('-created_at')
@@ -77,11 +82,13 @@ def dashboard(request):
         'critical_issues': critical_issues,
         'sla_warnings': sla_warnings,
         'recent_updates': recent_updates,
+        'staff_members': StaffMember.objects.filter(is_active=True),
         'type_labels_json': json.dumps(type_labels),
         'type_data_json': json.dumps(type_data),
     }
     
     return render(request, 'tracking/dashboard.html', context)
+
 
 
 def issue_detail(request, issue_id):

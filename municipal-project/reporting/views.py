@@ -29,6 +29,7 @@ def report_issue(request):
     - Voice input support (via browser)
     - Duplicate detection
     - Email confirmation
+    - Image uploads
     """
     if request.method == 'POST':
         form = SmartIssueForm(request.POST, request.FILES)
@@ -58,6 +59,16 @@ def report_issue(request):
             issue.sla_due_at = calculate_sla_due(issue)
             
             issue.save()
+            
+            # Handle image uploads - support both single 'image' and multiple 'images'
+            images = request.FILES.getlist('image') or request.FILES.getlist('images')
+            for i, img in enumerate(images):
+                IssueImage.objects.create(
+                    issue=issue,
+                    image=img,
+                    is_primary=(i == 0),
+                    uploaded_by=issue.reporter_name,
+                )
             
             # Send confirmation email
             send_issue_confirmation(issue)

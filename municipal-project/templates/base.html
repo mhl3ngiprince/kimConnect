@@ -196,8 +196,8 @@
                 <div class="flex items-center gap-3">
                     <a href="/" class="flex items-center gap-3 group">
                         <div class="relative">
-                            <img src="/static/municipal_service/Images/logo.png" alt="Sol Plaatje Logo" 
-                                 class="h-10 w-10 object-contain transition-transform group-hover:scale-110" onerror="this.style.display='none'">
+                            <img src="{% static 'municipal_service/Images/logo.png' %}" alt="Sol Plaatje Logo" 
+                                 class="h-10 w-10 object-contain transition-transform group-hover:scale-110" onerror="this.onerror=null; this.src='/static/municipal_service/Images/logo.png';">
                         </div>
                         <div class="hidden sm:block">
                             <h1 class="text-xl font-bold gradient-text">KimConnect</h1>

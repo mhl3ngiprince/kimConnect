@@ -41,8 +41,12 @@
             </div>
             {% endif %}
 
-            <form method="POST" class="space-y-5">
+            <form method="POST" class="space-y-6">
                 {% csrf_token %}
+                {{ form.management_form }}
+                {% for form in form %}
+                    {{ form }}
+                {% endfor %}
 
                 <!-- Full Name -->
                 <div>

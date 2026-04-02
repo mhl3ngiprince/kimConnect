@@ -64,11 +64,39 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Issue Details</h2>
                 
+                <!-- Images Gallery -->
+                {% if issue.images.all %}
+                <div class="mb-6">
+                    <h3 class="text-md font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="image" class="w-4 h-4"></i>
+                        Photos ({{ issue.images.all|length }})
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {% for image in issue.images.all %}
+                        <div class="group">
+                            <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Issue photo' }}" 
+                                 class="w-full aspect-square object-cover rounded-xl shadow-sm group-hover:shadow-md transition-all cursor-pointer"
+                                 onclick="openImageModal('{{ image.image.url }}')">
+                            {% if image.caption %}
+                            <p class="text-xs text-gray-500 mt-1 line-clamp-1">{{ image.caption }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-gray-50 rounded-xl p-8 text-center mb-6">
+                    <i data-lucide="image-off" class="w-12 h-12 text-gray-400 mx-auto mb-2"></i>
+                    <p class="text-gray-500">No photos uploaded</p>
+                </div>
+                {% endif %}
+                
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <p class="text-sm text-gray-500">Issue Type</p>
                         <p class="font-medium text-gray-900">{{ issue.get_issue_type_display }}</p>
                     </div>
+
                     <div>
                         <p class="text-sm text-gray-500">Priority</p>
                         <p class="font-medium flex items-center gap-2">

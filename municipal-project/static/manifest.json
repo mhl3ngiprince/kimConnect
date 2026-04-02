@@ -1,66 +1,52 @@
 {
-  "name": "KimConnect - Sol Plaatje Municipal Services",
-  "short_name": "KimConnect",
-  "description": "Report and track municipal issues in Kimberley",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#7C3AED",
-  "orientation": "portrait-primary",
-  "scope": "/",
-  "lang": "en-ZA",
-  "categories": ["government", "utilities", "productivity"],
-  "icons": [
-    {
-      "src": "/static/icons/icon-192x192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/icons/icon-512x512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Report Issue",
-      "short_name": "Report",
-      "description": "Submit a new municipal issue",
-      "url": "/report/",
-      "icons": [{ "src": "/static/icons/icon-192x192.svg", "sizes": "192x192" }]
-    },
-    {
-      "name": "Track Issues",
-      "short_name": "Track",
-      "description": "Track your reported issues",
-      "url": "/track/",
-      "icons": [{ "src": "/static/icons/icon-192x192.svg", "sizes": "192x192" }]
-    },
-    {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View municipal dashboard",
-      "url": "/tracking/dashboard/",
-      "icons": [{ "src": "/static/icons/icon-192x192.svg", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/static/screenshots/desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/static/screenshots/mobile.png",
-      "sizes": "375x667",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false
+    "name": "KimConnect - Sol Plaatje Municipality",
+    "short_name": "KimConnect",
+    "description": "Community Service Delivery System for Sol Plaatje Municipality",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1e3a5f",
+    "theme_color": "#2563eb",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "en-ZA",
+    "categories": ["government", "utilities", "productivity"],
+    "icons": [
+        {
+            "src": "/static/municipal_service/Images/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/municipal_service/Images/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Report Issue",
+            "short_name": "Report",
+            "description": "Submit a new service issue",
+            "url": "/reporting/report/",
+            "icons": [{ "src": "/static/municipal_service/Images/logo.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "Track Issues",
+            "short_name": "Track",
+            "description": "Track your reported issues",
+            "url": "/reporting/track/",
+            "icons": [{ "src": "/static/municipal_service/Images/logo.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "Staff dashboard",
+            "url": "/tracking/dashboard/",
+            "icons": [{ "src": "/static/municipal_service/Images/logo.png", "sizes": "96x96" }]
+        }
+    ],
+    "screenshots": [],
+    "prefer_related_applications": false
 }

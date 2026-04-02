@@ -137,8 +137,22 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <h2 class="text-lg font-semibold text-gray-900 mr-auto">Recent Issues</h2>
                         
+                        <!-- Quick Assign Form -->
+                        <form method="POST" action="{% url 'tracking:assign_issue' %}" class="flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="issue_id" value="">
+                            <select name="staff_member" class="px-3 py-2 border rounded-lg text-sm focus:ring focus:ring-purple-500" required>
+                                <option value="">Assign Staff</option>
+                                {% for staff in staff_members %}
+                                <option value="{{ staff.id }}">{{ staff.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">Assign</button>
+                        </form>
+                        
                         <!-- Status Filter -->
                         <select onchange="filterIssues('status', this.value)" 
+
                                 class="px-4 py-2 border-2 border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 style="min-height: 44px;"
                                 aria-label="Filter by status">

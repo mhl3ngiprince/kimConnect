@@ -45,7 +45,7 @@ class SmartIssueForm(forms.ModelForm):
         fields = [
             'title', 'issue_type', 'description', 'location', 
             'reporter_name', 'reporter_email', 'reporter_phone',
-            'priority', 'is_anonymous', 'images'
+            'priority', 'is_anonymous'
         ]
         widgets = {
             'title': forms.TextInput(attrs={
@@ -143,22 +143,22 @@ class SmartIssueForm(forms.ModelForm):
     
     def clean_title(self):
         title = self.cleaned_data.get('title', '').strip()
-        if len(title) < 10:
-            raise forms.ValidationError('Title must be at least 10 characters for clarity')
+        if len(title) < 3:
+            raise forms.ValidationError('Title is required (min 3 chars)')
         if len(title) > 200:
             raise forms.ValidationError('Title must be less than 200 characters')
         return title
     
     def clean_description(self):
         description = self.cleaned_data.get('description', '').strip()
-        if len(description) < 20:
-            raise forms.ValidationError('Please provide more details (at least 20 characters)')
+        if len(description) < 10:
+            raise forms.ValidationError('Description is required (min 10 chars)')
         return description
     
     def clean_location(self):
         location = self.cleaned_data.get('location', '').strip()
-        if len(location) < 5:
-            raise forms.ValidationError('Please provide a more specific location')
+        if len(location) < 3:
+            raise forms.ValidationError('Location is required (min 3 chars)')
         return location
     
     def clean_reporter_email(self):

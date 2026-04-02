@@ -230,6 +230,14 @@ class Issue(models.Model):
         """Human-readable status"""
         return dict(STATUS_CHOICES).get(self.status, self.status)
     
+    def get_issue_type_display(self):
+        """Human-readable issue type"""
+        return dict(ISSUE_TYPES).get(self.issue_type, self.issue_type)
+    
+    def get_priority_display(self):
+        """Human-readable priority"""
+        return dict(PRIORITY_CHOICES).get(self.priority, self.priority)
+    
     @property
     def priority_emoji(self):
         """Priority indicator emoji"""

@@ -1,0 +1,1 @@
+web: gunicorn municipal_service.wsgi --log-file -

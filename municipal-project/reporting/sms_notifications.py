@@ -16,11 +16,13 @@ class SMSProvider:
     
     def send(self, phone_number: str, message: str) -> bool:
         """Send SMS to phone number"""
-        raise NotImplementedError
+        logger.warning(f"Base SMSProvider.send() called - no provider configured. Phone: {phone_number[:10]}...")
+        return False
     
     def send_template(self, phone_number: str, template_name: str, context: dict) -> bool:
         """Send SMS using template"""
-        raise NotImplementedError
+        logger.warning(f"Base SMSProvider.send_template() called - no provider configured. Template: {template_name}")
+        return False
 
 
 class TwilioSMSProvider(SMSProvider):
@@ -248,7 +250,7 @@ def notify_issue_created(issue) -> dict:
     context = {
         'tracking_code': issue.tracking_code,
         'issue_type': issue.get_issue_type_display(),
-        'location': issue.area or 'Kimberley',
+        'location': issue.location or 'Kimberley',
         'track_url': track_url,
     }
     
