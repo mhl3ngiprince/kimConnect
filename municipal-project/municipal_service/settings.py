@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-3urz^hye-!6^1#@iornt^_hfy8dweyth8n)fo0919#i6%ay3(=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*.localhost']
+import os
+ALLOWED_HOSTS = ['*'] if os.getenv('DEBUG', 'False') == 'False' else ['localhost', '127.0.0.1', '*.localhost', 'kimconnect.onrender.com']
 
 
 # Application definition
